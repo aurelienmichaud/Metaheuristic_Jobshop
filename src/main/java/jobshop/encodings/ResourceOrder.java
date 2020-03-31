@@ -30,24 +30,6 @@ public class ResourceOrder extends Encoding {
 
 	public Schedule toSchedule() {
 
-		/*
-		int[][] startTimes = new int[this.instance.numJobs][this.instance.numTasks];
-		int[] jobsTimeCounter = new int[this.instance.numJobs];
-
-		Arrays.fill(jobsTimeCounter, 0);
-
-		for (int job = 0; job < this.instance.numJobs; job++) {
-			for (int task = 0; task < this.instance.numTasks; task++) {
-				int machine = this.instance.machine(job, task);
-
-				startTimes[job][task] = max(jobsTimeCounter[job]);
-				jobsTimeCounter[job] += this.instance.duration(job, task) + this.getStartTime(machine, new Task(job, task));
-			}
-		}
-
-		return new Schedule(this.instance, startTimes);
-		*/
-
 		int[] jobs = new int[this.instance.numJobs * this.instance.numMachines];
 		Arrays.fill(jobs, -1);
 
