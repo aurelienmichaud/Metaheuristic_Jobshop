@@ -61,26 +61,6 @@ public class ResourceOrder extends Encoding {
 		return new Schedule(this.instance, startTimes);
 	}
 
-	private int getStartTime(int machine, Task task) {
-
-		int timeCounter = 0;
-
-		System.out.println("=== NEW TASK " + task + " ===");
-
-		for (Task t : this.resourceOrderMatrix[machine]) {
-
-			if (task.equals(t)) {
-				return timeCounter;
-			}
-
-			timeCounter += 	this.instance.duration(t.job, t.task);
-
-			System.out.println("timeCounter = " + timeCounter);
-		}
-
-		return -1;
-	}
-
 	public void fromSchedule(Schedule sc) {
 
 		if (sc == null) { return; }

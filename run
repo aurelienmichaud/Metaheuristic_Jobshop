@@ -1,6 +1,6 @@
 #!/bin/sh
 
-build_dir="~/INSA/Metaheuristiques/template-jobshop/build/classes/java/main/"
+build_dir="/home/cacao/INSA/Metaheuristiques/jobshop/build/classes/java/main/"
 
 if [[ $# -eq 0 ]]; then
 	echo "Usage: ./run [-b] your.package.Class"
