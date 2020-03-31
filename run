@@ -1,0 +1,22 @@
+#!/bin/sh
+
+build_dir="/home/cacao/INSA/Metaheuristiques/template-jobshop/build/classes/java/main/"
+
+if [[ $# -eq 0 ]]; then
+	echo "Usage: ./run [-b] your.package.Class"
+	echo -e "\t-b : build before running the class"
+	exit 1
+fi
+
+if [[ $# -eq 2 ]]; then
+	if [[ $1 -eq "-b" ]]; then
+		gradle build || exit 1
+		class=$2
+		echo -e "\n=== java $class ===\n"
+	fi
+else
+	class=$1
+fi
+
+cd $build_dir && java $class
+
