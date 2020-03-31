@@ -99,7 +99,7 @@ public class ResourceOrder extends Encoding {
 				}
 
 				Task tmp = this.resourceOrderMatrix[machine][column];
-				this.resourceOrderMatrix[machine][column] 	= resourceOrderMatrix[machine][min_index];
+				this.resourceOrderMatrix[machine][column] 	= this.resourceOrderMatrix[machine][min_index];
 				this.resourceOrderMatrix[machine][min_index] = tmp;
 			}
 		}
