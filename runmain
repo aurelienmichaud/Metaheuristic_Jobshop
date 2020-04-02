@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -x
+
+if [[ $# -lt 2 ]]; then
+	echo "Usage: ./runmain SOLVER INSTANCE"
+	exit 1
+fi
+
+gradle build || exit 1
+gradle jar || exit 1
+java -jar build/libs/JSP.jar --solver $1 --instance $2
+

@@ -42,14 +42,6 @@ public class DebuggingMain {
 
 			Task[][] t = ro.getResourceOrderMatrix();
 
-			for (int i = 0; i < t.length; i++) {
-				for (int j = 0; j < t[i].length; j++) {
-					System.out.print(t[i][j]);
-				}
-
-				System.out.println();
-			}
-
 			System.out.println("reformed sched : " + ro.toSchedule());
 
 		} catch (IOException e) {

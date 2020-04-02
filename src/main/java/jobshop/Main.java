@@ -7,9 +7,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-
 import jobshop.solvers.BasicSolver;
 import jobshop.solvers.RandomSolver;
+
+import jobshop.solvers.GreedyBinaryRelation;
+import jobshop.solvers.GreedySolver;
+
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
@@ -22,8 +25,13 @@ public class Main {
 	private static HashMap<String, Solver> solvers;
 	static {
 		solvers = new HashMap<>();
-		solvers.put("basic", new BasicSolver());
-		solvers.put("random", new RandomSolver());
+		solvers.put("basic",		new BasicSolver());
+		solvers.put("random", 		new RandomSolver());
+
+		solvers.put("greedyspt", 	new GreedySolver(GreedyBinaryRelation.SPT));
+		solvers.put("greedylpt", 	new GreedySolver(GreedyBinaryRelation.LPT));
+		solvers.put("greedysrpt",	new GreedySolver(GreedyBinaryRelation.SRPT));
+		solvers.put("greedylrpt", 	new GreedySolver(GreedyBinaryRelation.SRPT));
 		// add new solvers here
 	}
 
