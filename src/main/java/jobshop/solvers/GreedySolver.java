@@ -1,6 +1,3 @@
-
-
-
 package jobshop.solvers;
 
 import jobshop.Instance;
@@ -16,23 +13,33 @@ import java.util.function.BiFunction;
 import java.lang.Integer;
 import java.lang.Boolean;
 
-/* Shortest Processing Time */
+/* Greedy solver implementing SPT, LPT, SRPT and LRPT prioritizing methods */
 public class GreedySolver implements Solver {
 
 	private Instance instance;
-
+	/* The time at which each machine (resource) is available */
 	private int[] datePerMachine;
 	/* Needed for XRPT binary relations */
 	private int[][] remainingProcessingTimes;
-
+	/* All the currently pending operations (tasks), updated at each loop of the greedy algorithm */
 	private ArrayList<Task> pendingOperations;
-
+	/* The binary relation which defines how the operations (tasks)
+	 * will be sorted and prioritized */
 	private GreedyBinaryRelation gbr;	
 
-	public GreedySolver(GreedyBinaryRelation gbr) {
-		this.gbr = gbr;
-	}
+	/**
+	 * Instantiate a Greedy Solver.
+	 * @param gbr	The binary relation which defines how the operations (tasks)
+	 *		will be sorted and prioritezed 
+	 * @return	A new instance of GreedySolver
+	 * @see		jobshop.solvers.GreedyBinaryRelation
+	 */
+	public GreedySolver(GreedyBinaryRelation gbr) { this.gbr = gbr; }
 
+	/*
+	 * Init the basic elements arrays, should be called inside this.solve(Instance) function,
+	 * since it is the starting point at which we know the instance which we will work on
+	 */
 	private void init(Instance instance) {
 		this.instance = instance;
 		this.datePerMachine = new int[this.instance.numMachines];
@@ -56,6 +63,13 @@ public class GreedySolver implements Solver {
 		}
 	}
 
+	/**
+	 * Solve the instance problem.
+	 * @param instance	The instance of the problem which needs be solved
+	 * @param deadline	The ultimate time at which all the tasks should be finished
+	 * @return		A Result infered by the built schedule
+	 * @see			jobshop.Result
+	 */
 	@Override
 	public Result solve(Instance instance, long deadline) {
 
@@ -75,6 +89,9 @@ public class GreedySolver implements Solver {
 		return new Result(instance, sol.toSchedule(), Result.ExitCause.Blocked);
 	}
 
+	/*
+	 * Get the earliest time available among all the resources (machines) at which pending tasks could start.
+	 */
 	private int getEarliestTime() {
 		int minDate = this.datePerMachine[0];
 		for (int date: this.datePerMachine) {
@@ -83,6 +100,11 @@ public class GreedySolver implements Solver {
 		return minDate;
 	}
 
+	/*
+	 * Find all the pending tasks (operations) which can is waiting when earliestTime is reached.
+	 * @param earliestTime	The time at which the tasks should be waiting to get started
+	 * @return		An array of all the pending tasks which can is waiting when earliestTime is reached
+	 */
 	private ArrayList<Task> expandOperations(int earliestTime) {
 
 		ArrayList<Task> arr = new ArrayList<Task>();
@@ -101,21 +123,30 @@ public class GreedySolver implements Solver {
 		return arr;
 	}
 
+	/*
+	 * Sorting depends on the chosen Greedy Binary Relation.
+	 * @param arr	Task array to be sorted
+	 * @return	The input array sorted according to the comparisonFunction binary relation
+	 */
 	private ArrayList<Task> sortTaskArray(ArrayList<Task> arr) {
-
 		switch (this.gbr) {
-			case SPT:
-				return this.sortSPT(arr);
-			case LPT:
-				return this.sortLPT(arr);
-			case SRPT:
-				return this.sortSRPT(arr);
-			case LRPT:
-				return this.sortLRPT(arr);
-			default:return null;
+			case SPT: 	return this.sortSPT(arr);
+			case LPT: 	return this.sortLPT(arr);
+			case SRPT: 	return this.sortSRPT(arr);
+			case LRPT:	return this.sortLRPT(arr);
+
+			default:	return null;
 		}
 	}
-	
+
+	/*
+	 * SPT, LPT general implementation.
+	 * @param arr			Task array to be sorted
+	 * @param comparisonFunction	Binary relation function which will compare
+	 *				the current observed task with the optimum one 
+	 * @return			The input array sorted according to the comparisonFunction binary relation
+	 * @see				java.util.function.Bifunction
+	 */
 	private ArrayList<Task> sortXPT(ArrayList<Task> arr,
 					BiFunction<Task, Task, Boolean> comparisonFunction) {
 
@@ -138,6 +169,14 @@ public class GreedySolver implements Solver {
 		return sorted;
 	}
 
+	/*
+	 * SRPT, LRPT general implementation.
+	 * @param arr			Task array to be sorted
+	 * @param comparisonFunction	Binary relation function which will compare
+	 *				the current observed task with the optimum one 
+	 * @return			The input array sorted according to the comparisonFunction binary relation
+	 * @see				java.util.function.Bifunction
+	 */
 	private ArrayList<Task> sortXRPT(ArrayList<Task> arr,
 					BiFunction<Integer, Integer, Boolean> comparisonFunction) {
 
@@ -169,25 +208,44 @@ public class GreedySolver implements Solver {
 		return sorted;
 	}
 
-
+	/*
+	 * SPT implementation.
+	 * @param arr			Task array to be sorted
+	 * @return			The input array sorted according to the comparisonFunction binary relation
+	 */
 	private ArrayList<Task> sortSPT(ArrayList<Task> arr) {
 		return this.sortXPT(arr,
 				(Task current, Task optimum)
 				-> new Boolean(this.instance.duration(current.job, current.task) < this.instance.duration(optimum.job, optimum.task)));
 	}
 
+	/*
+	 * LPT implementation.
+	 * @param arr			Task array to be sorted
+	 * @return			The input array sorted according to the comparisonFunction binary relation
+	 */
 	private ArrayList<Task> sortLPT(ArrayList<Task> arr) {
 		return this.sortXPT(arr,
 				(Task current, Task optimum)
 				-> new Boolean(this.instance.duration(current.job, current.task) > this.instance.duration(optimum.job, optimum.task)));
 	}
 
+	/*
+	 * SRPT implementation.
+	 * @param arr			Task array to be sorted
+	 * @return			The input array sorted according to the comparisonFunction binary relation
+	 */
 	private ArrayList<Task> sortSRPT(ArrayList<Task> arr) {
 		return this.sortXRPT(arr,
 				(Integer currentRemainingTime, Integer optimumRemainingTime)
 				-> new Boolean(currentRemainingTime.intValue() < optimumRemainingTime.intValue()));
 	}
 
+	/*
+	 * LRPT implementation.
+	 * @param arr			Task array to be sorted
+	 * @return			The input array sorted according to the comparisonFunction binary relation
+	 */
 	private ArrayList<Task> sortLRPT(ArrayList<Task> arr) {
 		return this.sortXRPT(arr,
 				(Integer currentRemainingTime, Integer optimumRemainingTime)
