@@ -10,12 +10,21 @@ public class ResourceOrder extends Encoding {
 
 	private Task[][] resourceOrderMatrix; /* ROM */
 
+	/**
+	 * ResourceOrder constructor.
+	 * @param instance	The instance problem
+	 */
 	public ResourceOrder(Instance instance) {
 		super(instance);
 
 		this.resourceOrderMatrix = new Task[this.instance.numMachines][this.instance.numJobs];
 	}
 
+	/**
+	 * ResourceOrder constructor.
+	 * @param instance	The instance problem
+	 * @param sc		The shedule which we infer the resource order matrix from
+	 */
 	public ResourceOrder(Instance instance, Schedule sc) {
 		super(instance);
 
@@ -28,22 +37,25 @@ public class ResourceOrder extends Encoding {
 		return this.resourceOrderMatrix;
 	}
 
+	/**
+	 * Translate the resource order matrix into a schedule
+	 * @return	Schedule built from the resource order matrix
+	 */
 	public Schedule toSchedule() {
-
+		/* For each machine, it stores the time at which the resource is available */
+		int[] nextFreeTimeResource = new int[this.instance.numMachines];
+		/* For each job, it stores the pending task */
+		int[] nextTask = new int[this.instance.numJobs];
+		/* For each task, it stores the time at which they will be started */
+		int[][] startTimes = new int[this.instance.numJobs][this.instance.numTasks];
+		/* For each machine, all the consecutive jobs which have a task that require that machine */
 		int[] jobs = new int[this.instance.numJobs * this.instance.numMachines];
-		Arrays.fill(jobs, -1);
 
 		for (int i = 0, machine = 0; machine < this.instance.numMachines; machine++) {
 			for (int job = 0; job < this.instance.numJobs; job++, i++) {
 				jobs[i] = this.resourceOrderMatrix[machine][job].job;
 			}
 		}
-
-		int[] nextFreeTimeResource = new int[this.instance.numMachines];
-
-		int[] nextTask = new int[this.instance.numJobs];
-
-		int[][] startTimes = new int[this.instance.numJobs][this.instance.numTasks];
 
 		for (int job : jobs) {
 			int task = nextTask[job];
@@ -61,6 +73,10 @@ public class ResourceOrder extends Encoding {
 		return new Schedule(this.instance, startTimes);
 	}
 
+	/**
+	 * Translate a schedule into the resource order matrix
+	 * @param sc	Schedule translated into the resource order matrix
+	 */
 	public void fromSchedule(Schedule sc) {
 
 		if (sc == null) { return; }
@@ -76,9 +92,15 @@ public class ResourceOrder extends Encoding {
 			}
 		}
 
+		/* We now need to get our matrix in order and sort it according
+		 * to the ascending task starting time for each machine */
 		this.sortROMFromSchedule(sc);
 	}
 
+	/*
+	 * Sort the resource order matrix in ascending task starting time for each machine
+	 * @param sc	Base schedule which is used to get the starting time of each task
+	 */
 	private void sortROMFromSchedule(Schedule sc) {
 
 		if (sc == null) { return; }

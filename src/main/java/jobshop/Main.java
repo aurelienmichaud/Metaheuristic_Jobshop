@@ -95,7 +95,7 @@ public class Main {
 			output.println();
 			output.print("instance size  best      ");
 			for(String s : solversToTest) {
-				output.print("runtime makespan ecart        ");
+				output.print("runtime makespan ecart(%)        ");
 			}
 			output.println();
 
