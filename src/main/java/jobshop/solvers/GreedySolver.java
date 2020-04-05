@@ -11,6 +11,10 @@ import jobshop.encodings.Task;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.BiFunction;
+
+import java.lang.Integer;
+import java.lang.Boolean;
 
 /* Shortest Processing Time */
 public class GreedySolver implements Solver {
@@ -18,6 +22,8 @@ public class GreedySolver implements Solver {
 	private Instance instance;
 
 	private int[] datePerMachine;
+	/* Needed for XRPT binary relations */
+	private int[][] remainingProcessingTimes;
 
 	private ArrayList<Task> pendingOperations;
 
@@ -31,6 +37,16 @@ public class GreedySolver implements Solver {
 		this.instance = instance;
 		this.datePerMachine = new int[this.instance.numMachines];
 		Arrays.fill(this.datePerMachine, 0);
+
+		if (this.gbr == GreedyBinaryRelation.SRPT || this.gbr == GreedyBinaryRelation.LRPT) {
+			/* XRPT binary relations look for the remaining processing time of each task
+			 * We instantiate the table with (-1) values and they will be calculated only once,
+			 * while the algorithm is running */
+			this.remainingProcessingTimes = new int[this.instance.numJobs][this.instance.numTasks];
+			for (int job = 0; job < this.instance.numJobs; job++) {
+				Arrays.fill(this.remainingProcessingTimes[job], -1);
+			}
+		}
 
 		this.pendingOperations = new ArrayList<Task>();
 		for (int task = 0; task < this.instance.numTasks; task++) {
@@ -49,7 +65,7 @@ public class GreedySolver implements Solver {
 
 		while (!this.pendingOperations.isEmpty()) {
 			int earliestTime = this.getEarliestTime();
-			for (Task op: this.sortTupleArray(this.expandOperations(earliestTime))) {
+			for (Task op: this.sortTaskArray(this.expandOperations(earliestTime))) {
 
 				sol.jobs[sol.nextToSet++] = op.job;
 				this.datePerMachine[this.instance.machine(op.job, op.task)] += this.instance.duration(op.job, op.task);
@@ -85,74 +101,97 @@ public class GreedySolver implements Solver {
 		return arr;
 	}
 
-	private ArrayList<Task> sortTupleArray(ArrayList<Task> arr) {
+	private ArrayList<Task> sortTaskArray(ArrayList<Task> arr) {
+
+		switch (this.gbr) {
+			case SPT:
+				return this.sortSPT(arr);
+			case LPT:
+				return this.sortLPT(arr);
+			case SRPT:
+				return this.sortSRPT(arr);
+			case LRPT:
+				return this.sortLRPT(arr);
+			default:return null;
+		}
+	}
+	
+	private ArrayList<Task> sortXPT(ArrayList<Task> arr,
+					BiFunction<Task, Task, Boolean> comparisonFunction) {
+
 		ArrayList<Task> sorted = new ArrayList<Task>();
 		int length = arr.size();
+
 		for (int i = 0; i < length; i++) {
 			Task optimum = arr.get(0);
+
 			for (int j = 0; j < arr.size(); j++) {
-
-				/* Needed for SRPT & LRPT */
 				Task currentTask = arr.get(j);
-				int remainingTime = 0;
-				int optimumRemainingTime = 0;
 
-				switch (this.gbr) {
-					case SPT:
-						if (this.instance.duration(arr.get(j).job, arr.get(j).task) < this.instance.duration(optimum.job, optimum.task)) {
-							optimum = arr.get(j);
-						}	
-						break;
+				if (comparisonFunction.apply(currentTask, optimum).booleanValue()) {
+					optimum = arr.get(j);
+				}	
+			}
+			sorted.add(optimum);
+			arr.remove(arr.indexOf(optimum));
+		}
+		return sorted;
+	}
 
-					case LPT:
-						if (this.instance.duration(arr.get(j).job, arr.get(j).task) > this.instance.duration(optimum.job, optimum.task)) {
-							optimum = arr.get(j);
-						}	
-						break;
+	private ArrayList<Task> sortXRPT(ArrayList<Task> arr,
+					BiFunction<Integer, Integer, Boolean> comparisonFunction) {
 
-					case SRPT:
-						remainingTime = 0;
-						for (int task = currentTask.task; task < this.instance.numTasks; task++) {
-							remainingTime += this.instance.duration(currentTask.job, task);
-						}
+		ArrayList<Task> sorted = new ArrayList<Task>();
+		int length = arr.size();
 
-						optimumRemainingTime = 0;
-						for (int task = optimum.task; task < this.instance.numTasks; task++) {
-							optimumRemainingTime += this.instance.duration(currentTask.job, task);
-						}
+		for (int i = 0; i < length; i++) {
+			Task optimum = arr.get(0);
 
-						if (remainingTime < optimumRemainingTime) {
-
-							optimum = arr.get(j);
-						}	
-						break;
-
-					case LRPT:
-						remainingTime = 0;
-						for (int task = currentTask.task; task < this.instance.numTasks; task++) {
-							remainingTime += this.instance.duration(currentTask.job, task);
-						}
-
-						optimumRemainingTime = 0;
-						for (int task = optimum.task; task < this.instance.numTasks; task++) {
-							optimumRemainingTime += this.instance.duration(currentTask.job, task);
-						}
-
-						if (remainingTime > optimumRemainingTime) {
-
-							optimum = arr.get(j);
-						}	
-						break;
-
-					default:break;
+			for (int j = 0; j < arr.size(); j++) {
+				Task currentTask = arr.get(j);
+				/* The remaining processing time of that task has not been calculated yet */
+				if (this.remainingProcessingTimes[currentTask.job][currentTask.task] == -1) {
+					this.remainingProcessingTimes[currentTask.job][currentTask.task] = 0;
+					for (int task = currentTask.task; task < this.instance.numTasks; task++) {
+						this.remainingProcessingTimes[currentTask.job][currentTask.task] += this.instance.duration(currentTask.job, task);
+					}
 				}
+
+				if (comparisonFunction.apply(new Integer(this.remainingProcessingTimes[currentTask.job][currentTask.task]),
+								new Integer(this.remainingProcessingTimes[optimum.job][optimum.task])).booleanValue()) {
+					optimum = arr.get(j);
+				}	
 			}
 
 			sorted.add(optimum);
 			arr.remove(arr.indexOf(optimum));
 		}
-
 		return sorted;
+	}
+
+
+	private ArrayList<Task> sortSPT(ArrayList<Task> arr) {
+		return this.sortXPT(arr,
+				(Task current, Task optimum)
+				-> new Boolean(this.instance.duration(current.job, current.task) < this.instance.duration(optimum.job, optimum.task)));
+	}
+
+	private ArrayList<Task> sortLPT(ArrayList<Task> arr) {
+		return this.sortXPT(arr,
+				(Task current, Task optimum)
+				-> new Boolean(this.instance.duration(current.job, current.task) > this.instance.duration(optimum.job, optimum.task)));
+	}
+
+	private ArrayList<Task> sortSRPT(ArrayList<Task> arr) {
+		return this.sortXRPT(arr,
+				(Integer currentRemainingTime, Integer optimumRemainingTime)
+				-> new Boolean(currentRemainingTime.intValue() < optimumRemainingTime.intValue()));
+	}
+
+	private ArrayList<Task> sortLRPT(ArrayList<Task> arr) {
+		return this.sortXRPT(arr,
+				(Integer currentRemainingTime, Integer optimumRemainingTime)
+				-> new Boolean(currentRemainingTime.intValue() > optimumRemainingTime.intValue()));
 	}
 }
 

@@ -140,6 +140,7 @@ public class Main {
 			for(int solverId = 0 ; solverId < solversToTest.size() ; solverId++) {
 				output.printf("%7.1f %8s %5.1f        ", runtimes[solverId], "-", distances[solverId]);
 			}
+			System.out.println();
 
 
 

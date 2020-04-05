@@ -1,13 +1,31 @@
 #!/bin/sh
 
-set -x
+
+usage () {
+	echo "Usage:"
+	echo -e "\t./runmain SOLVER INSTANCE : Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
+	echo -e "\t./runmain -b SOLVER INSTANCE : ('gradle build' and 'gradle jar' is performed before running the program)"
+	exit 1
+}
 
 if [[ $# -lt 2 ]]; then
-	echo "Usage: ./runmain SOLVER INSTANCE"
-	exit 1
+	usage
 fi
 
-gradle build || exit 1
-gradle jar || exit 1
-java -jar build/libs/JSP.jar --solver $1 --instance $2
+solver=$1
+instance=$2
+
+if [[ $# -eq 3 ]]; then
+	if [[ $1 == "-b" ]]; then
+		gradle build || exit 1
+		gradle jar || exit 1
+		solver=$2
+		instance=$3	
+	else
+		usage
+	fi
+fi
+
+set -x
+java -jar build/libs/JSP.jar --solver $solver --instance $instance
 
