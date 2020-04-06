@@ -1,22 +1,196 @@
 #!/bin/sh
 
-build_dir="/home/cacao/INSA/Metaheuristiques/jobshop/build/classes/java/main/"
 
-if [[ $# -eq 0 ]]; then
-	echo "Usage: ./run [-b] your.package.Class"
+base_dir=$(pwd)
+
+
+
+
+usage () {
+	echo "Usage:"
+	echo -e "$0 main SOLVER INSTANCE\t\t: Run SOLVER algorithm on instance INSTANCE"
+	echo -e "$0 other JAVA_CLASS\t\t\t: Run the class JAVA_CLASS's main method"
+	echo -e "$0 test Your.Package.TestClass\t: Run JUnit test class"
+	echo -e "$0 stats SOLVER\t\t\t: Run stats script to get the stats of the algorithm running on ALL instances"
+	echo -e "$0 clean\t\t\t\t: gradle clean"
+	echo -e "$0 graph\t\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
+	exit 1
+}
+
+usage_main () {
+	echo "Usage:" echo -e "\t./run main SOLVER INSTANCE : Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
+	echo -e "\t./run main -b SOLVER INSTANCE : ('gradle build' and 'gradle jar' is performed before running the program)"
+	exit 1
+}
+
+usage_other () {
+	echo "Usage: ./run other [-b] Your.Package.Class"
 	echo -e "\t-b : build before running the class"
 	exit 1
-fi
+}
 
-if [[ $# -eq 2 ]]; then
-	if [[ $1 -eq "-b" ]]; then
-		gradle build || exit 1
-		class=$2
-		echo -e "\n=== java $class ===\n"
+usage_stats () {
+	echo "Usage : $0 stats SOLVER"
+	exit 1
+}
+
+usage_test () {
+	echo "Usage: $0 test your.package.TestClass"
+	echo "e.g. $0 test jobshop.encodings.EncodingTests"
+	exit 1
+}
+
+
+
+
+
+
+build_main () {
+	gradle build || exit 1
+	gradle jar || exit 1
+}
+
+launch_main () {
+	java -jar build/libs/JSP.jar --solver $solver --instance $instance
+}
+
+run_main () {
+
+	if [[ $# -lt 2 ]]; then
+		usage_main
 	fi
-else
-	class=$1
+
+	solver=$1
+	instance=$2
+
+	if [[ $# -eq 3 ]]; then
+		if [[ $1 == "-b" ]]; then
+			build
+			solver=$2
+			instance=$3	
+		else
+			usage_main
+		fi
+	fi
+
+	launch_main || (build_main && launch_main)
+}
+
+build_other () {
+	cd $base_dir && gradle build
+}
+
+launch_other () {
+
+	cd $1 && (java $2)
+}
+
+run_other () {
+	build_dir="$base_dir/build/classes/java/main/"
+
+	if [[ $# -eq 0 ]]; then
+		usage_other
+	fi
+
+	if [[ $# -eq 2 ]]; then
+		if [[ $1 -eq "-b" ]]; then
+			gradle build || exit 1
+			class=$2
+			echo -e "\n=== java $class ===\n"
+		else
+			usage_other
+		fi
+	else
+		class=$1
+	fi
+
+	launch_other $build_dir $class || (build_other && launch_other $build_dir $class)
+}
+
+run_test () {
+
+	if [[ $# -ne 1 ]]; then
+		usage_test 
+	fi
+
+	set -x
+
+	gradle test --info > /dev/null
+
+	gradle test --tests $1 || exit 1
+
+	firefox	./build/reports/tests/test/index.html
+}
+
+run_stats () {
+	if [[ $# -ne 1 ]]; then
+		usage_stats
+	fi
+
+	output_stat_file=$base_dir/stats/$1.stats
+
+	for instance in $(ls -1 $base_dir/instances); do
+		if [[ $instance != "README.md" ]]; then
+			line=$($base_dir/run main $1 $instance | grep $instance)
+			echo $line >> $output_stat_file
+			echo "> $instance <"
+		fi
+	done
+}
+
+run_graph () {
+	cd $base_dir/stats/graph/ && ./generate_html_graph
+}
+
+if [[ $# -lt 1 ]]; then
+	usage
 fi
 
-cd $build_dir && java $class
+case "$1" in
+
+	"main")
+		if [[ $# -eq 4 ]]; then
+			run_main $2 $3 $4
+		elif [[ $# -eq 3 ]]; then
+			run_main $2 $3
+		else 
+			usage_main
+		fi
+		;;
+
+	"other")
+		if [[ $# -eq 3 ]]; then
+			run_other $2 $3 
+		elif [[ $# -eq 2 ]]; then
+			run_other $2
+		else
+			usage_other
+		fi
+		;;
+
+	"test")
+		if [[ $# -eq 2 ]]; then
+			run_test $2
+		fi
+		;;
+
+	"stats")
+		if [[ $# -eq 2 ]]; then
+			run_stats $2
+		else
+			usage_stats
+		fi
+		;;
+
+	"graph" )
+		run_graph
+		;;
+
+	"clean")
+		gradle clean
+		;;
+	*)
+		usage
+		;;
+esac
 
