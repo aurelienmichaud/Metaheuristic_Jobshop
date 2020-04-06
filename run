@@ -42,9 +42,6 @@ usage_test () {
 
 
 
-
-
-
 build_main () {
 	gradle build || exit 1
 	gradle jar || exit 1
@@ -146,44 +143,28 @@ if [[ $# -lt 1 ]]; then
 	usage
 fi
 
+args=($@)
+
 case "$1" in
 
 	"main")
-		if [[ $# -eq 4 ]]; then
-			run_main $2 $3 $4
-		elif [[ $# -eq 3 ]]; then
-			run_main $2 $3
-		else 
-			usage_main
-		fi
+		run_main ${args[@]:1}
 		;;
 
 	"other")
-		if [[ $# -eq 3 ]]; then
-			run_other $2 $3 
-		elif [[ $# -eq 2 ]]; then
-			run_other $2
-		else
-			usage_other
-		fi
+		run_other ${args[@]:1}
 		;;
 
 	"test")
-		if [[ $# -eq 2 ]]; then
-			run_test $2
-		fi
+		run_test ${args[@]:1}
 		;;
 
 	"stats")
-		if [[ $# -eq 2 ]]; then
-			run_stats $2
-		else
-			usage_stats
-		fi
+		run_stats ${args[@]:1}
 		;;
 
 	"graph" )
-		run_graph
+		run_graph ${args[@]:1}
 		;;
 
 	"clean")
