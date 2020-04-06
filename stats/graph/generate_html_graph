@@ -1,0 +1,93 @@
+#!/bin/sh
+
+out=index.html
+colors=( "beautiblue" "red" "pink" "black" "blue" "green" "orange" "yellow" "grey" "purple" )
+
+make_dataset () {
+	(
+		echo "label: '$1',"
+		echo "backgroundColor: window.chartColors.$2,"
+		echo "borderColor: window.chartColors.$2,"
+		echo "data: ["
+	) >> $out
+
+	firsttime="1"
+
+	for percentage in $(cat $1 | awk -c '{ print $6 }'); do
+
+		if [[ $firsttime != "1" ]]; then
+			echo -n ", " >> $out
+		fi
+
+		echo -n "'$percentage'" >> $out
+
+		firsttime=$(echo "0")
+	done
+
+	(
+		echo "],"
+		echo "fill: false,"
+	) >> $out
+}
+
+pre () {
+
+	cat ./pre.html > $out
+
+	(
+		echo "var config = {"
+		echo "type: 	'line',"
+		echo "data:	{"
+		echo -n "labels: ["
+	) >> $out
+
+	firsttime="1"
+
+	for instance in $(ls -1 ../../instances/); do
+
+		if [[ $instance != "README.md" ]]; then
+			if [[ $firsttime != "1" ]]; then
+				echo -n ", " >> $out
+			fi
+			echo -n "'$instance'" >> $out
+			firsttime=$(echo "0")
+		fi
+	done
+
+	(
+		echo "],"
+		echo "datasets: ["
+	) >> $out
+}
+
+post() {
+	(
+		echo "]},"
+	) >> $out
+
+	cat ./post.html >> $out
+}
+
+pre
+
+firsttime="1"
+colorindex=0
+
+for solver in $(ls -1 ../ | grep ".stats"); do
+	#echo $solver
+	if [[ $firsttime != "1" ]]; then
+		echo -n ", " >> $out
+	fi
+
+	echo "{" >> $out
+	make_dataset "../$solver" ${colors[$colorindex]}
+	echo "}" >> $out
+
+	colorindex=$(expr $colorindex + 1)
+	firsttime=$(echo "0")
+done
+
+post
+
+firefox $out
+

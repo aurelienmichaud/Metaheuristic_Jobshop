@@ -8,6 +8,16 @@ usage () {
 	exit 1
 }
 
+build () {
+
+	gradle build || exit 1
+	gradle jar || exit 1
+}
+
+run () {
+	java -jar build/libs/JSP.jar --solver $solver --instance $instance
+}
+
 if [[ $# -lt 2 ]]; then
 	usage
 fi
@@ -17,8 +27,7 @@ instance=$2
 
 if [[ $# -eq 3 ]]; then
 	if [[ $1 == "-b" ]]; then
-		gradle build || exit 1
-		gradle jar || exit 1
+		build
 		solver=$2
 		instance=$3	
 	else
@@ -26,6 +35,4 @@ if [[ $# -eq 3 ]]; then
 	fi
 fi
 
-set -x
-java -jar build/libs/JSP.jar --solver $solver --instance $instance
-
+run || (build && run)

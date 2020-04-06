@@ -32,6 +32,11 @@ public class Main {
 		solvers.put("greedylpt", 	new GreedySolver(GreedyBinaryRelation.LPT));
 		solvers.put("greedysrpt",	new GreedySolver(GreedyBinaryRelation.SRPT));
 		solvers.put("greedylrpt", 	new GreedySolver(GreedyBinaryRelation.SRPT));
+
+		solvers.put("greedyestspt", 	new GreedySolver(GreedyBinaryRelation.EST_SPT));
+		solvers.put("greedyestlpt", 	new GreedySolver(GreedyBinaryRelation.EST_LPT));
+		solvers.put("greedyestsrpt",	new GreedySolver(GreedyBinaryRelation.EST_SRPT));
+		solvers.put("greedyestlrpt", 	new GreedySolver(GreedyBinaryRelation.EST_LRPT));
 		// add new solvers here
 	}
 
