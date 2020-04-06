@@ -31,7 +31,7 @@ public class Main {
 		solvers.put("greedyspt", 	new GreedySolver(GreedyBinaryRelation.SPT));
 		solvers.put("greedylpt", 	new GreedySolver(GreedyBinaryRelation.LPT));
 		solvers.put("greedysrpt",	new GreedySolver(GreedyBinaryRelation.SRPT));
-		solvers.put("greedylrpt", 	new GreedySolver(GreedyBinaryRelation.SRPT));
+		solvers.put("greedylrpt", 	new GreedySolver(GreedyBinaryRelation.LRPT));
 
 		solvers.put("greedyestspt", 	new GreedySolver(GreedyBinaryRelation.EST_SPT));
 		solvers.put("greedyestlpt", 	new GreedySolver(GreedyBinaryRelation.EST_LPT));
