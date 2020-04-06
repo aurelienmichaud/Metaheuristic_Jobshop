@@ -42,9 +42,8 @@ pre () {
 	) >> $out
 
 	firsttime="1"
-
-	for instance in $(ls -1 ../../instances/); do
-
+	# Take the first stat file and get all the instances that have worked
+	for instance in $(echo ../`ls -1 ../ | grep -E "*.stats" | head -n 1` | xargs cat | awk -c '{ print $1 }'); do
 		if [[ $instance != "README.md" ]]; then
 			if [[ $firsttime != "1" ]]; then
 				echo -n ", " >> $out
@@ -53,6 +52,16 @@ pre () {
 			firsttime=$(echo "0")
 		fi
 	done
+#	for instance in $(ls -1 ../../instances/); do
+#
+#		if [[ $instance != "README.md" ]]; then
+#			if [[ $firsttime != "1" ]]; then
+#				echo -n ", " >> $out
+#			fi
+#			echo -n "'$instance'" >> $out
+#			firsttime=$(echo "0")
+#		fi
+#	done
 
 	(
 		echo "],"
