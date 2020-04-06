@@ -65,7 +65,7 @@ run_main () {
 
 	if [[ $# -eq 3 ]]; then
 		if [[ $1 == "-b" ]]; then
-			build
+			build_main
 			solver=$2
 			instance=$3	
 		else

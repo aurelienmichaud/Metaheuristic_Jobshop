@@ -3,21 +3,18 @@
 This repository contains the starter code for the assignment.
 
 
-## Compile
-
-Compilation instructions are given for Linux. On windows you can use the `gradlew.bat` script.
+## Run the program
 
 ```
-❯ ./gradlew build  # Compiles the project
-❯ ./gradlew jar      # Creates a fat-jar in build/libs/JSP.jar
-```
-
-The compiled jar is now `build/libs/JSP.jar` can be executed like so :
-
-```
-❯ java -jar build/libs/JSP.jar --solver basic --instance ft06
+❯ ./run main basic ft06  # Run (and thus compile before if not already compiled) the basic algorithm on the instance ft06
 ```
 The command line above indicates that we want to solve the instance named`ft06` with the `basic` solver. It should give an output like the following :
+
+Forcing the compilation and rebuild is also possible. 
+```
+❯ ./run main -b basic ft06  # Compile and then run the greedy spt algorithm on the instance ft06
+```
+
 ```
                          basic
 instance size  best      runtime makespan ecart
@@ -68,31 +65,32 @@ named arguments:
 
 ```
 
-### Running directly from Gradle
+## Get statistics from the algorithms
 
+You can get statistics from the alrogithms running on all the instances located in `./instances`.
 The project can be executed directly with `gradle` by specifying the arguments like so :
 
 ```
-❯ ./gradlew run --args="--solver basic random --instance aaa1 ft06 ft10 ft20"
+❯ ./run stats greedyestsrpt
 ```
 
-This notably ensures that sources have been recompiled whenever necessary.
+This will create a file in `./stats` called `SOLVER_NAME.stats` with the results of each instances parsed with the solver `SOLVER_NAME`
 
 
-## IDE Support
+## Graph visualization
 
-Most IDEs should provide support for importing gradle projects. However, our experience has been best with IntelliJ so far and we would recommend it.
+It is possible to have a great comparison against all the algorithms once the `./runs stats SOLVER_NAME` is done.
+The following command will basically gather all the stats files in `./stats` directory and produce a HTML/JavaScript graph with the ChartJS library. This same command will open that graph with firefox
 
-#### IntelliJ
-
-IntelliJ has worked best, with out of the box support for the import of gradle projets:
-https://www.jetbrains.com/help/idea/gradle.html#gradle_import_project_start
-
-
-#### Eclipse
-
-Most technical problems have been related to the use of Eclipse so we don't recommend using it unless you have a good reason to.
-We have however configured gradle to allow generating an eclipse configuration like so : 
 ```
-./gradlew eclipseClean eclipse
+❯ ./run graph
 ```
+
+## test
+
+One can execute the JUnit tests with the following command.
+
+```
+❯ ./run test jobshop.test.encodings.EncodingTests # Replace this class by the JUnit class you like
+```
+
