@@ -4,8 +4,10 @@ out=index.html
 colors=( "beautiblue" "red" "pink" "black" "blue" "green" "orange" "yellow" "grey" "purple" )
 
 make_dataset () {
+	label=$(echo -n "$1" | sed -r "s/[.][.][/](.+).stats$/\1/g" | tr '[:lower:]' '[:upper:]')
+
 	(
-		echo "label: '$1',"
+		echo "label: '$label',"
 		echo "backgroundColor: window.chartColors.$2,"
 		echo "borderColor: window.chartColors.$2,"
 		echo "data: ["
