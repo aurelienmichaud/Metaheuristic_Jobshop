@@ -8,18 +8,21 @@ base_dir=$(pwd)
 
 usage () {
 	echo "Usage:"
-	echo -e "$0 main SOLVER INSTANCE\t\t: Run SOLVER algorithm on instance INSTANCE"
-	echo -e "$0 other JAVA_CLASS\t\t\t: Run the class JAVA_CLASS's main method"
-	echo -e "$0 test Your.Package.TestClass\t: Run JUnit test class"
-	echo -e "$0 stats SOLVER\t\t\t: Run stats script to get the stats of the algorithm running on ALL instances"
-	echo -e "$0 clean\t\t\t\t: gradle clean"
-	echo -e "$0 graph\t\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
+	echo -e "$0 main [--solver] SOLVER [--instance] INSTANCE\t\t: Run SOLVER algorithm on instance INSTANCE. Please run '$0 main' for more information"
+	echo -e "$0 other JAVA_CLASS\t\t\t\t\t\t: Run the class JAVA_CLASS's main method"
+	echo -e "$0 test Your.Package.TestClass\t\t\t\t: Run JUnit test class"
+	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the algorithm running on ALL instances"
+	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
+	echo -e "$0 graph\t\t\t\t\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
 	exit 1
 }
 
 usage_main () {
-	echo "Usage:" echo -e "\t./run main SOLVER INSTANCE : Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
-	echo -e "\t./run main -b SOLVER INSTANCE : ('gradle build' and 'gradle jar' is performed before running the program)"
+	echo "Usage:"
+	echo -e "./run main SOLVER INSTANCE\t\t\t\t\t\t\t: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
+	echo -e "./run main -b SOLVER INSTANCE\t\t\t\t\t\t\t: 'gradle build' and 'gradle jar' is performed before running the program"
+	echo -e "./run main --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]\t: Running each solver SOLVERs on INSTANCEs."
+	echo -e "./run main -b --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]\t: Compiling & Running each solver SOLVERs on INSTANCEs."
 	exit 1
 }
 
@@ -68,6 +71,17 @@ run_main () {
 		else
 			usage_main
 		fi
+	elif [[ $# -gt 3 ]]; then
+		if [[ $1 == "-b" ]]; then
+			build_main
+			main_args=$@
+			main_args=${args[@]:2}
+		else
+			main_args=$@
+		fi
+
+		java -jar build/libs/JSP.jar ${main_args[@]} 
+		exit 0
 	fi
 
 	launch_main || (build_main && launch_main)
