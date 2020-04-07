@@ -6,6 +6,7 @@ This repository contains the starter code for the assignment.
 ## Run the program
 
 ```
+❯ ./run main
 Usage:
 ./run main SOLVER INSTANCE							: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'
 ./run main -b SOLVER INSTANCE							: 'gradle build' and 'gradle jar' is performed before running the program
