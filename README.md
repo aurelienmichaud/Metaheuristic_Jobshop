@@ -6,6 +6,16 @@ This repository contains the starter code for the assignment.
 ## Run the program
 
 ```
+Usage:
+./run main SOLVER INSTANCE							: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'
+./run main -b SOLVER INSTANCE							: 'gradle build' and 'gradle jar' is performed before running the program
+./run main --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]	: Running each solver SOLVERs on INSTANCEs.
+./run main -b --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]	: Compiling & Running each solver SOLVERs on INSTANCEs.
+```
+
+e.g.
+
+```
 ❯ ./run main basic ft06  # Run (and thus compile before if not already compiled) the basic algorithm on the instance ft06
 ```
 The command line above indicates that we want to solve the instance named`ft06` with the `basic` solver. It should give an output like the following :
@@ -65,6 +75,22 @@ named arguments:
 
 ```
 
+## Run script
+
+The `run` script comes with several commands and features of the form `./run COMMAND [ARGS...]`. Before using a command please do `./run COMMAND` without any arguments to get more information about how to use it. Do not worry though, these commands are straightforward.
+
+```
+❯ ./run
+Usage:
+./run main [--solver] SOLVER [--instance] INSTANCE		: Run SOLVER algorithm on instance INSTANCE. Please run './run main' for more information
+./run other JAVA_CLASS						: Run the class JAVA_CLASS's main method
+./run test Your.Package.TestClass				: Run JUnit test class
+./run stats SOLVER						: Run stats script to get the stats of the algorithm running on ALL instances
+./run clean							: gradle clean
+./run graph							: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox
+./run draw PATH_TO_INSTANCE					: Generate a svg graph file representing the instance problem and open svg file in firefox
+```
+
 ## Get statistics from the algorithms
 
 You can get statistics from the alrogithms running on all the instances located in `./instances`.
@@ -83,14 +109,28 @@ It is possible to have a great comparison against all the algorithms once the `.
 The following command will basically gather all the stats files in `./stats` directory and produce a HTML/JavaScript graph with the ChartJS library. This same command will open that graph with firefox
 
 ```
+❯ ./run stats greedyspt
+❯ ./run stats greedylrpt
+❯ ./run stats greedyestspt
+...
 ❯ ./run graph
 ```
 
-## test
+## JUnit Tests
 
 One can execute the JUnit tests with the following command.
 
 ```
 ❯ ./run test jobshop.test.encodings.EncodingTests # Replace this class by the JUnit class you like
+```
+
+## Instances SVG drawing
+
+The `run` script allows you to easily visualize an instance by drawing it in a SVG format and displaying it with firefox.
+
+```
+❯ ./run draw
+Usage: ./run draw PATH_TO_INSTANCE
+e.g. ./run draw ./instances/ft06
 ```
 

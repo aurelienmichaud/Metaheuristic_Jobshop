@@ -24,7 +24,8 @@ usage () {
 }
 
 usage_main () {
-	echo "Usage:" echo -e "./run main SOLVER INSTANCE\t\t\t\t\t\t\t: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
+	echo "Usage:"
+	echo -e "./run main SOLVER INSTANCE\t\t\t\t\t\t\t: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
 	echo -e "./run main -b SOLVER INSTANCE\t\t\t\t\t\t\t: 'gradle build' and 'gradle jar' is performed before running the program"
 	echo -e "./run main --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]\t: Running each solver SOLVERs on INSTANCEs."
 	echo -e "./run main -b --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]\t: Compiling & Running each solver SOLVERs on INSTANCEs."
