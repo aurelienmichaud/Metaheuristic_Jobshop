@@ -1,7 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
 
 base_dir=$(pwd)
+instances_dir=$base_dir/instances/
+stats_dir=$base_dir/resources/stats/
+build_dir=$base_dir/build/
+svg_dir=$stats_dir/instances_SVGs/
+graph_dir=$stats_dir/graph/
 
 
 
@@ -14,12 +19,12 @@ usage () {
 	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the algorithm running on ALL instances"
 	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
 	echo -e "$0 graph\t\t\t\t\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
+	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in firefox"
 	exit 1
 }
 
 usage_main () {
-	echo "Usage:"
-	echo -e "./run main SOLVER INSTANCE\t\t\t\t\t\t\t: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
+	echo "Usage:" echo -e "./run main SOLVER INSTANCE\t\t\t\t\t\t\t: Basically doing 'java -jar build/libs/JSP.jar --solver SOLVER --instance INSTANCE'"
 	echo -e "./run main -b SOLVER INSTANCE\t\t\t\t\t\t\t: 'gradle build' and 'gradle jar' is performed before running the program"
 	echo -e "./run main --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]\t: Running each solver SOLVERs on INSTANCEs."
 	echo -e "./run main -b --solver SOLVER [SOLVER2...] --instance INSTANCE [INSTANCE2...]\t: Compiling & Running each solver SOLVERs on INSTANCEs."
@@ -40,6 +45,12 @@ usage_stats () {
 usage_test () {
 	echo "Usage: $0 test your.package.TestClass"
 	echo "e.g. $0 test jobshop.encodings.EncodingTests"
+	exit 1
+}
+
+usage_draw () {
+	echo "Usage: $0 draw PATH_TO_INSTANCE"
+	echo "e.g. $0 draw $instances_dir/ft06"
 	exit 1
 }
 
@@ -97,7 +108,7 @@ launch_other () {
 }
 
 run_other () {
-	build_dir="$base_dir/build/classes/java/main/"
+	class_dir="$build_dir/classes/java/main/"
 
 	if [[ $# -eq 0 ]]; then
 		usage_other
@@ -115,7 +126,7 @@ run_other () {
 		class=$1
 	fi
 
-	launch_other $build_dir $class || (build_other && launch_other $build_dir $class)
+	launch_other $class_dir $class || (build_other && launch_other $class_dir $class)
 }
 
 run_test () {
@@ -138,9 +149,9 @@ run_stats () {
 		usage_stats
 	fi
 
-	output_stat_file=$base_dir/stats/$1.stats
+	output_stat_file=$stats_dir/$1.stats
 
-	for instance in $(ls -1 $base_dir/instances); do
+	for instance in $(ls -1 $instances_dir); do
 		if [[ $instance != "README.md" ]]; then
 			line=$($base_dir/run main $1 $instance | grep $instance)
 			echo $line >> $output_stat_file
@@ -150,7 +161,76 @@ run_stats () {
 }
 
 run_graph () {
-	cd $base_dir/stats/graph/ && ./generate_html_graph
+	cd $graph_dir && ./generate_html_graph
+}
+
+write_svg_start () {
+	echo "START -> <J$2,T$3,M$4> [label = \"\"]" >> $1
+}
+
+write_svg () {
+	echo "<J${2},T${3},M${4}> -> <J${5},T$6,M$7> [label = \"$8\"]" >> $1
+}
+
+write_svg_end () {
+	echo "<J$2,T$3,M$4> -> END [label = \"$5\"]" >> $1
+}
+
+# Translate an instance file into a svg graph file
+run_draw () {
+
+	if [[ $# -eq 0 ]]; then
+		usage_draw
+	fi
+
+	for instance in $@; do
+		if [ -r $instance ]; then
+			instance_name=$(tr -d './' <<< $instance)
+			output_file=$svg_dir/$instance_name.dot
+
+			(
+				echo "digraph finite_state_machine {"
+				echo "rankdir=LR;"
+				echo "node [shape = circle];"	
+			) > $output_file
+
+			job=0
+			for job_line in $(grep -E "^[^#]" $instance | tail -n +2 | tr ' ' '_'); do
+				firsttime=1
+				new_task=1
+				machine=0
+				duration=0
+				task=0
+				for el in $(tr '_' ' ' <<< $job_line); do
+
+					if [[ $firsttime -eq 1 ]]; then
+						firsttime=$((1-$firsttime))
+						machine=$(echo "$el")
+						write_svg_start $output_file $job $task $machine
+						#echo "<START> -> <${job}|${task}|${machine}> [label = \"\"]" >> $output_file
+					else
+						if [ $new_task == 1 ]; then
+							write_svg $output_file $job $task $machine $job $(expr $task + 1) $el $duration
+							#echo "<${job}|${task}|${machine}> -> <${job}|$(expr ${task} + 1)|${el}> [label = \"${duration}\"]" >> $output_file
+							machine=$(echo "$el")
+							task=$(($task + 1))
+						else
+							duration=$(echo "$el")
+						fi
+					fi
+
+					new_task=$((1-$new_task))
+				done
+				write_svg_end $output_file $job $task $machine $duration
+				#echo "<${job}|${task}|${machine}> -> <END> [label = \"$duration\"]" >> $output_file
+				job=$(($job + 1))
+			done
+
+			echo "}" >> $output_file
+			
+			dot -Tsvg $output_file > $svg_dir/$instance_name.svg && rm $output_file && firefox $svg_dir/$instance_name.svg
+		fi
+	done
 }
 
 if [[ $# -lt 1 ]]; then
@@ -184,6 +264,11 @@ case "$1" in
 	"clean")
 		gradle clean
 		;;
+
+	"draw")
+		run_draw ${args[@]:1}
+		;;
+
 	*)
 		usage
 		;;

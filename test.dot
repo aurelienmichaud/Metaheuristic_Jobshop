@@ -1,0 +1,10 @@
+digraph finite_state_machine {
+rankdir=LR;
+node [shape = circle];
+<0|0|0> -> <0|1|1> [label = "3"]
+<0|1|1> -> <0|2|2> [label = "3"]
+<0|2|2> -> <1000|1000|1000> [label = "2"]
+<1|0|1> -> <1|1|0> [label = "2"]
+<1|1|0> -> <1|2|2> [label = "2"]
+<1|2|2> -> <1000|1000|1000> [label = "4"]
+}
