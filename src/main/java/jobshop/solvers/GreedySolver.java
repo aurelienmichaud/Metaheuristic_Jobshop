@@ -9,12 +9,16 @@ import jobshop.encodings.Task;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.BiFunction;
+import java.util.Random;
 
 import java.lang.Integer;
 import java.lang.Boolean;
 
-/* Greedy solver implementing SPT, LPT, SRPT and LRPT prioritizing methods */
+/* Greedy solver implementing SPT, LPT, SRPT and LRPT and EST_* prioritizing methods */
 public class GreedySolver implements Solver {
+
+
+	/* General parameters */
 
 	private Instance instance;
 	/* The time at which each machine (resource) is available */
@@ -27,6 +31,16 @@ public class GreedySolver implements Solver {
 	 * will be sorted and prioritized */
 	private GreedyBinaryRelation gbr;	
 
+
+	/* Randomness-enabled-only parameters */
+
+	private boolean randomness;
+	/* Tells us at which rate we have to invoke randomness.
+	 * Basically tells us we invoke randomness at a rate of (1/randomnessLevel)
+	 * The greater the randomnessLevel is, the less random the algorithm will be */
+	private int randomnessLevel;
+
+
 	/**
 	 * Instantiate a Greedy Solver.
 	 * @param gbr	The binary relation which defines how the operations (tasks)
@@ -35,6 +49,21 @@ public class GreedySolver implements Solver {
 	 * @see		jobshop.solvers.GreedyBinaryRelation
 	 */
 	public GreedySolver(GreedyBinaryRelation gbr) { this.gbr = gbr; }
+	/**
+	 * Instantiate a Greedy Solver.
+	 * @param gbr			The binary relation which defines how the operations (tasks)
+	 *				will be sorted and prioritezed 
+	 * @param randomnessLevel	Basically tells us we invoke randomness at a rate of (1/randomnessLevel).
+	 *				The greater the randomnessLevel is, the less random the algorithm will be.
+	 *				This value needs to be greater than 0 though. A 0 value means no randomness at all.
+	 * @return			A new instance of GreedySolver
+	 * @see				jobshop.solvers.GreedyBinaryRelation
+	 */
+	public GreedySolver(GreedyBinaryRelation gbr, int randomnessLevel) {
+		this.gbr = gbr;
+		this.randomnessLevel	= randomnessLevel;
+		this.randomness 	= (this.randomnessLevel > 0 	? true 			: false);
+	}
 
 	/*
 	 * Init the basic elements arrays, should be called inside this.solve(Instance) function,
@@ -113,18 +142,37 @@ public class GreedySolver implements Solver {
 	 * @return	The best task sorted according to the comparisonFunction binary relation
 	 */
 	private Task getOptimalTask(ArrayList<Task> arr) {
-		switch (this.gbr) {
-			case SPT: 	return this.getOptimalTask_SPT(arr);
-			case LPT: 	return this.getOptimalTask_LPT(arr);
-			case SRPT: 	return this.getOptimalTask_SRPT(arr);
-			case LRPT:	return this.getOptimalTask_LRPT(arr);
+		ArrayList<Task> arg;
+		/* This is where we translate randomness :
+		 * -	If the array contains at least 'this.randomnessLevel' elements,
+		 * 	then we randomly remove (arr.size()/this.randomnessLevel) elements
+		 *	from the array 'arr'. 
+		 * -	Otherwise we do not apply random operations  */
+		if (this.randomness) {
+			if (this.randomnessLevel == 1) {
+				return arr.get(new Random().nextInt(arr.size()));
+			} 
 
-			case EST_SPT: 	return this.getOptimalTask_EST_SPT(arr);
-			case EST_LPT: 	return this.getOptimalTask_EST_LPT(arr);
-			case EST_SRPT: 	return this.getOptimalTask_EST_SRPT(arr);
-			case EST_LRPT:	return this.getOptimalTask_EST_LRPT(arr);
+			/* Make a shallow copy of arr in order to be able to modify it */
+			arg = new ArrayList<Task>(arr);
+			for (int i = 0; i < (arr.size() / this.randomnessLevel); i++) {
+				arg.remove(new Random().nextInt(arg.size()));
+			}
+
+		} else { arg = arr; }
+
+		switch (this.gbr) {
+			case SPT: 	return this.getOptimalTask_SPT(arg);
+			case LPT: 	return this.getOptimalTask_LPT(arg);
+			case SRPT: 	return this.getOptimalTask_SRPT(arg);
+			case LRPT:	return this.getOptimalTask_LRPT(arg);
+
+			case EST_SPT: 	return this.getOptimalTask_EST_SPT(arg);
+			case EST_LPT: 	return this.getOptimalTask_EST_LPT(arg);
+			case EST_SRPT: 	return this.getOptimalTask_EST_SRPT(arg);
+			case EST_LRPT:	return this.getOptimalTask_EST_LRPT(arg);
 			/* Should never happen */
-			default:	return (arr.isEmpty() ? null : arr.get(0));
+			default:	return (arg.isEmpty() ? null : arg.get(0));
 		}
 	}
 

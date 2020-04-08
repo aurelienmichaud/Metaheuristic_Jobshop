@@ -5,12 +5,20 @@ window.chartColors = {
 	red: 'rgb(255, 0, 0)',
 	orange: 'rgb(255, 159, 64)',
 	yellow: 'rgb(255, 205, 86)',
-	green: 'rgb(75, 192, 192)',
+	greenish: 'rgb(75, 192, 192)',
+	green: 'rgb(0, 255, 0)',
 	blue: 'rgb(54, 162, 235)',
 	purple: 'rgb(153, 102, 255)',
 	grey: 'rgb(201, 203, 207)',
 	black: 'rgb(0, 0, 0)',
-	beautiblue: 'rgb(0, 102, 204)'
+	beautiblue: 'rgb(0, 102, 204)',
+	magenta: 'rgb(255, 0, 255)',
+	brown: 'rgb(53, 19, 0)',
+	dark_blue: 'rgb(0, 9, 53)',
+	dark_red: 'rgb(89, 1, 4)',
+	dark_grey: 'rgb(38, 38, 38)',
+	dark_green: 'rgb(0, 84, 16)',
+	beige: 'rgb(207, 211, 120)'
 };
 
 (function(global) {

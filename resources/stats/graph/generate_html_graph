@@ -1,9 +1,11 @@
 #!/bin/sh
 
 out=index.html
-colors=( "beautiblue" "red" "pink" "black" "blue" "green" "orange" "yellow" "grey" "purple" )
+colors=( "beautiblue" "red" "pink" "black" "blue" "green" "orange" "yellow" "grey" "purple" "greenish" "magenta" "brown" "dark_blue" "dark_red" "dark_grey" "dark_green" "beige")
 
 make_dataset () {
+
+	echo "> $3 <"
 	label=$3
 
 	(
@@ -82,7 +84,7 @@ parse_solvers_stats () {
 		fi
 
 		echo "{" >> $out
-		make_dataset  "../$solver" ${colors[$colorindex]} $(echo -n "../$solver" | sed -r "s/[.][.][/](.+).stats$/\1/g" | tr '[:lower:]' '[:upper:]') $1
+		make_dataset  "../$solver" ${colors[$colorindex]} $(echo -n "$solver" | sed -r "s/(.+).stats$/\1/g" | tr '[:lower:]' '[:upper:]') $1
 		echo "}" >> $out
 
 		colorindex=$(expr $colorindex + 1)

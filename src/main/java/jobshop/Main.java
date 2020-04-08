@@ -21,6 +21,8 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 public class Main {
 
+	private static final int DEFAULT_RANDOMNESS_LEVEL = 2;
+
 	/** All solvers available in this program */
 	private static HashMap<String, Solver> solvers;
 	static {
@@ -37,6 +39,16 @@ public class Main {
 		solvers.put("greedyestlpt", 	new GreedySolver(GreedyBinaryRelation.EST_LPT));
 		solvers.put("greedyestsrpt",	new GreedySolver(GreedyBinaryRelation.EST_SRPT));
 		solvers.put("greedyestlrpt", 	new GreedySolver(GreedyBinaryRelation.EST_LRPT));
+
+		solvers.put("greedyspt_random", 	new GreedySolver(GreedyBinaryRelation.SPT, DEFAULT_RANDOMNESS_LEVEL));
+		solvers.put("greedylpt_random", 	new GreedySolver(GreedyBinaryRelation.LPT, DEFAULT_RANDOMNESS_LEVEL));
+		solvers.put("greedysrpt_random",	new GreedySolver(GreedyBinaryRelation.SRPT, DEFAULT_RANDOMNESS_LEVEL));
+		solvers.put("greedylrpt_random", 	new GreedySolver(GreedyBinaryRelation.LRPT, DEFAULT_RANDOMNESS_LEVEL));
+
+		solvers.put("greedyestspt_random", 	new GreedySolver(GreedyBinaryRelation.EST_SPT, DEFAULT_RANDOMNESS_LEVEL));
+		solvers.put("greedyestlpt_random", 	new GreedySolver(GreedyBinaryRelation.EST_LPT, DEFAULT_RANDOMNESS_LEVEL));
+		solvers.put("greedyestsrpt_random",	new GreedySolver(GreedyBinaryRelation.EST_SRPT, DEFAULT_RANDOMNESS_LEVEL));
+		solvers.put("greedyestlrpt_random", 	new GreedySolver(GreedyBinaryRelation.EST_LRPT, DEFAULT_RANDOMNESS_LEVEL));
 		// add new solvers here
 	}
 

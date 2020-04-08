@@ -16,7 +16,7 @@ usage () {
 	echo -e "$0 main [--solver] SOLVER [--instance] INSTANCE\t\t: Run SOLVER algorithm on instance INSTANCE. Please run '$0 main' for more information"
 	echo -e "$0 other JAVA_CLASS\t\t\t\t\t\t: Run the class JAVA_CLASS's main method"
 	echo -e "$0 test Your.Package.TestClass\t\t\t\t: Run JUnit test class"
-	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the algorithm running on ALL instances"
+	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the solver running on ALL instances. Please run '$0 stats' for information on averages"
 	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
 	echo -e "$0 graph best|runtime|makespan|distance\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
 	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in firefox"
@@ -39,7 +39,9 @@ usage_other () {
 }
 
 usage_stats () {
-	echo "Usage : $0 stats SOLVER"
+	echo "Usage :"
+	echo -e "$0 stats SOLVER\t\t\t: Get the statistics by running the solver on every available instance once"
+	echo -e "$0 stats average NB_OF_RUNS SOLVER\t: Get the average statistics by running the solver on every available instance NB_OF_RUNS times. Handy for random solvers statistics"
 	exit 1
 }
 
@@ -152,19 +154,79 @@ run_test () {
 }
 
 run_stats () {
-	if [[ $# -ne 1 ]]; then
+
+	if [[ $# -eq 1 ]]; then
+
+		output_stat_file=$stats_dir/$1.stats
+
+		for instance in $(ls -1 $instances_dir); do
+			if [[ $instance != "README.md" ]]; then
+				line=$($base_dir/run main $1 $instance | grep $instance)
+				echo $line >> $output_stat_file
+				echo "> $instance <"
+			fi
+		done
+
+	elif [[ $# -eq 3 ]] && [[ $1 == "average" ]] && [[ $2 != "0" ]]; then
+
+		output_stat_file="$stats_dir/$3_average.stats"
+		echo "" > $output_stat_file
+
+		echo "=== AVERAGING RESULTS OF $3 ($output_stat_file) ==="
+
+		for instance in $(ls -1 $instances_dir); do
+
+			if [[ $instance != "README.md" ]]; then
+
+				alright=1
+
+				average_line=0
+				average_size=0
+				average_best=0
+				average_runtime="0"
+				average_makespan="0"
+				average_distance="0"
+
+				for i in $(seq $2 || usage_stats); do
+					line=$($base_dir/run main $3 $instance | grep $instance)
+
+					if [[ $line != "" ]]; then
+						read rubbish size best runtime makespan distance <<< $line
+						
+						#echo "READING [$size $best $runtime $makespan $distance]"
+
+						average_size=$size
+						average_best=$best
+						average_runtime=$(awk -c "BEGIN {print $average_runtime+($runtime)}")
+						average_makespan=$(awk -c "BEGIN {print $average_makespan+($makespan)}")
+						average_distance=$(awk -c "BEGIN {print $average_distance+($distance)}")
+
+						#echo "OUTPUTTING [$average_size $average_best $average_runtime $average_makespan $average_distance]"
+						#echo ""
+
+						alright=1
+
+						echo "> $instance[$i] <"
+					else
+						alright=0
+					fi
+				done
+				if [[ $alright -eq 1 ]]; then
+					average_runtime=$(awk -c "BEGIN {print $average_runtime/($2)}")
+					average_makespan=$(awk -c "BEGIN {print $average_makespan/($2)}")
+					average_distance=$(awk -c "BEGIN {print $average_distance/($2)}")
+
+					#echo -e "\n"
+					echo "$instance $average_size $average_best $average_runtime $average_makespan $average_distance" >> $output_stat_file
+					#echo -e "\n"
+				fi
+			fi
+		done
+	
+	else 
 		usage_stats
 	fi
 
-	output_stat_file=$stats_dir/$1.stats
-
-	for instance in $(ls -1 $instances_dir); do
-		if [[ $instance != "README.md" ]]; then
-			line=$($base_dir/run main $1 $instance | grep $instance)
-			echo $line >> $output_stat_file
-			echo "> $instance <"
-		fi
-	done
 }
 
 run_graph () {
