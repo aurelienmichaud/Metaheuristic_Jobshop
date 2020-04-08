@@ -88,7 +88,7 @@ Usage:
 ./run test Your.Package.TestClass				: Run JUnit test class
 ./run stats SOLVER						: Run stats script to get the stats of the algorithm running on ALL instances
 ./run clean							: gradle clean
-./run graph							: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox
+./run graph best|runtime|makespan|distance			: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox
 ./run draw PATH_TO_INSTANCE					: Generate a svg graph file representing the instance problem and open svg file in firefox
 ```
 
