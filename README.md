@@ -114,7 +114,14 @@ The following command will basically gather all the stats files in `./stats` dir
 ❯ ./run stats greedylrpt
 ❯ ./run stats greedyestspt
 ...
-❯ ./run graph
+❯ ./run graph distance
+```
+
+You can see statistics among the runtime, makespan & distance, and you can also see the best known makespan values.
+
+```
+Usage: ./run graph best|runtime|makespan|distance
+e.g. ./run graph distance
 ```
 
 ## JUnit Tests

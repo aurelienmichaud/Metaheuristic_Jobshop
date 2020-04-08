@@ -18,7 +18,7 @@ usage () {
 	echo -e "$0 test Your.Package.TestClass\t\t\t\t: Run JUnit test class"
 	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the algorithm running on ALL instances"
 	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
-	echo -e "$0 graph\t\t\t\t\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
+	echo -e "$0 graph best|runtime|makespan|distance\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
 	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in firefox"
 	exit 1
 }
@@ -52,6 +52,12 @@ usage_test () {
 usage_draw () {
 	echo "Usage: $0 draw PATH_TO_INSTANCE"
 	echo "e.g. $0 draw $instances_dir/ft06"
+	exit 1
+}
+
+usage_graph () {
+	echo "Usage: $0 graph best|runtime|makespan|distance"
+	echo "e.g. $0 graph distance"
 	exit 1
 }
 
@@ -162,7 +168,10 @@ run_stats () {
 }
 
 run_graph () {
-	cd $graph_dir && ./generate_html_graph
+	if [[ $# -eq 0 ]]; then
+		usage_graph
+	fi
+	cd $graph_dir && ./generate_html_graph $1
 }
 
 write_svg_start () {
