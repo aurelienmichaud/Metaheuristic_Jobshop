@@ -20,6 +20,14 @@ public class ResourceOrder extends Encoding {
 		this.resourceOrderMatrix = new Task[this.instance.numMachines][this.instance.numJobs];
 	}
 
+	public ResourceOrder(Schedule sc) {
+		super(sc.pb);
+
+		this.resourceOrderMatrix = new Task[this.instance.numMachines][this.instance.numJobs];
+
+		this.fromSchedule(sc);
+	}
+
 	/**
 	 * ResourceOrder constructor.
 	 * @param instance	The instance problem
@@ -70,7 +78,10 @@ public class ResourceOrder extends Encoding {
 			nextTask[job] = task + 1;
 		}	
 
-		return new Schedule(this.instance, startTimes);
+		Schedule s = new Schedule(this.instance, startTimes);
+		if (s.isValid())
+			return s;
+		return null;
 	}
 
 	/**
@@ -126,6 +137,23 @@ public class ResourceOrder extends Encoding {
 			}
 		}
 		
+	}
+
+	public ResourceOrder copy() {
+		return new ResourceOrder(this.toSchedule());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		for (int m = 0; m < this.instance.numMachines; m++) {
+			s.append("Machine ").append(m).append(" : ");
+			for (int j = 0; j < this.instance.numJobs; j++) {
+				s.append(this.resourceOrderMatrix[m][j]).append(" ; ");
+			}
+			s.append("\n");
+		}
+		return s.toString();
 	}
 }
 

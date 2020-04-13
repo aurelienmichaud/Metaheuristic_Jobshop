@@ -3,15 +3,12 @@ package jobshop;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import jobshop.solvers.BasicSolver;
-import jobshop.solvers.RandomSolver;
-
-import jobshop.solvers.GreedyBinaryRelation;
-import jobshop.solvers.GreedySolver;
+import jobshop.solvers.*;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -93,20 +90,23 @@ public class Main {
 				System.exit(1);
 			}
 		}
-		List<String> instances = ns.<String>getList("instance");
-		for(String instanceName : instances) {
-			if(!BestKnownResult.isKnown(instanceName)) {
-				System.err.println("ERROR: instance \"" + instanceName + "\" is not avalaible.");
+		List<String> instancePrefixes = ns.getList("instance");
+		List<String> instances = new ArrayList<>();
+		for (String instancePrefix : instancePrefixes) {
+			List<String> matches = BestKnownResult.instancesMatching(instancePrefix);
+			if (matches.isEmpty()) {
+				System.err.println("ERROR: instance prefix \"" + instancePrefix + "\" does not match any instance.");
 				System.err.println("       available instances: " + Arrays.toString(BestKnownResult.instances));
 				System.exit(1);
 			}
+			instances.addAll(matches);
 		}
 
 		float[] runtimes = new float[solversToTest.size()];
 		float[] distances = new float[solversToTest.size()];
 
 		try {
-			output.print(  "                         ");;
+			output.print(  "                         ");
 			for(String s : solversToTest)
 				output.printf("%-30s", s);
 			output.println();
