@@ -92,7 +92,7 @@ public class DescentSolver implements Solver {
 
 		boolean stuck = false;
 
-		while (System.currentTimeMillis() > deadline || stuck) {
+		while (System.currentTimeMillis() < deadline && !stuck) {
 
 			stuck = true;
 

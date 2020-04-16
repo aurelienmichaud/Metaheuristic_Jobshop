@@ -24,20 +24,21 @@ public class Main {
 	private static HashMap<String, Solver> solvers;
 	static {
 		solvers = new HashMap<>();
-		solvers.put("basic",		new BasicSolver());
-		solvers.put("random", 		new RandomSolver());
 
-		solvers.put("descent", 		new DescentSolver());
+		solvers.put("basic",			new BasicSolver());
+		solvers.put("random",			new RandomSolver());
 
-		solvers.put("greedyspt", 	new GreedySolver(GreedyBinaryRelation.SPT));
-		solvers.put("greedylpt", 	new GreedySolver(GreedyBinaryRelation.LPT));
-		solvers.put("greedysrpt",	new GreedySolver(GreedyBinaryRelation.SRPT));
-		solvers.put("greedylrpt", 	new GreedySolver(GreedyBinaryRelation.LRPT));
+		solvers.put("descent",			new DescentSolver());
 
-		solvers.put("greedyestspt", 	new GreedySolver(GreedyBinaryRelation.EST_SPT));
-		solvers.put("greedyestlpt", 	new GreedySolver(GreedyBinaryRelation.EST_LPT));
-		solvers.put("greedyestsrpt",	new GreedySolver(GreedyBinaryRelation.EST_SRPT));
-		solvers.put("greedyestlrpt", 	new GreedySolver(GreedyBinaryRelation.EST_LRPT));
+		solvers.put("greedyspt",		new GreedySolver(GreedyBinaryRelation.SPT));
+		solvers.put("greedylpt",		new GreedySolver(GreedyBinaryRelation.LPT));
+		solvers.put("greedysrpt",		new GreedySolver(GreedyBinaryRelation.SRPT));
+		solvers.put("greedylrpt",		new GreedySolver(GreedyBinaryRelation.LRPT));
+
+		solvers.put("greedyestspt",		new GreedySolver(GreedyBinaryRelation.EST_SPT));
+		solvers.put("greedyestlpt",		new GreedySolver(GreedyBinaryRelation.EST_LPT));
+		solvers.put("greedyestsrpt",		new GreedySolver(GreedyBinaryRelation.EST_SRPT));
+		solvers.put("greedyestlrpt",		new GreedySolver(GreedyBinaryRelation.EST_LRPT));
 
 		solvers.put("greedyspt_random", 	new GreedySolver(GreedyBinaryRelation.SPT, DEFAULT_RANDOMNESS_LEVEL));
 		solvers.put("greedylpt_random", 	new GreedySolver(GreedyBinaryRelation.LPT, DEFAULT_RANDOMNESS_LEVEL));
@@ -115,7 +116,7 @@ public class Main {
 			output.println();
 			output.print("instance size  best      ");
 			for(String s : solversToTest) {
-				output.print("runtime makespan ecart(%)        ");
+				output.print("runtime makespan ecart        ");
 			}
 			output.println();
 

@@ -24,8 +24,10 @@ public class GreedySolver implements Solver {
 	/* General parameters */
 
 	private Instance instance;
-	/* The time at which each machine (resource) is available */
-	private int[] datePerMachine;
+	/* The date at which each machine (resource) is available */
+	private int[] machineAvailabilityDate;
+	/* The date at which each task is going to start */
+	private int[][] taskStartingDate;
 	/* Needed for XRPT binary relations */
 	private int[][] remainingProcessingTimes;
 	/* All the currently pending operations (tasks), updated at each loop of the greedy algorithm */
@@ -75,8 +77,20 @@ public class GreedySolver implements Solver {
 	 */
 	private void init(Instance instance) {
 		this.instance = instance;
-		this.datePerMachine = new int[this.instance.numMachines];
-		Arrays.fill(this.datePerMachine, 0);
+
+		if (this.gbr == GreedyBinaryRelation.EST_SPT
+			|| this.gbr == GreedyBinaryRelation.EST_LPT
+			|| this.gbr == GreedyBinaryRelation.EST_SRPT
+			|| this.gbr == GreedyBinaryRelation.EST_LRPT) {
+
+			this.machineAvailabilityDate = new int[this.instance.numMachines];
+			Arrays.fill(this.machineAvailabilityDate, 0);
+
+			this.taskStartingDate = new int[this.instance.numJobs][this.instance.numTasks];
+			for (int job = 0; job < this.instance.numJobs; job++) {
+				Arrays.fill(this.taskStartingDate[job], -1);
+			}
+		}
 
 		/* XRPT binary relations look for the remaining processing time of each task
 		 * We instantiate the table with (-1) values and they will be calculated only once,
@@ -87,8 +101,13 @@ public class GreedySolver implements Solver {
 			|| this.gbr == GreedyBinaryRelation.EST_LRPT) {
 
 			this.remainingProcessingTimes = new int[this.instance.numJobs][this.instance.numTasks];
+			/* The remaining processing time of one task is basically the sum of the duration of 
+			 * the remaining tasks on the same job */
 			for (int job = 0; job < this.instance.numJobs; job++) {
-				Arrays.fill(this.remainingProcessingTimes[job], -1);
+				this.remainingProcessingTimes[job][this.instance.numTasks - 1] = this.instance.duration(job, this.instance.numTasks - 1);
+				for (int task = this.instance.numTasks - 2; task >= 0; task--) {
+					this.remainingProcessingTimes[job][task] = this.remainingProcessingTimes[job][task + 1] + this.instance.duration(job, task);
+				}
 			}
 		}
 
@@ -113,15 +132,24 @@ public class GreedySolver implements Solver {
 
 		ResourceOrder sol = new ResourceOrder(instance);
 
-		while (!this.pendingOperations.isEmpty()) {
+		while (/*System.currentTimeMillis() < deadline &&*/ !this.pendingOperations.isEmpty()) {
 
 			Task op = this.getOptimalTask(this.pendingOperations);
-			int op_machine = instance.machine(op.job, op.task);
+			int op_machine = instance.machine(op);
+
 			/* feed our resource ordered solution with the newly found optimal task */
 			sol.tasksByMachine[op_machine][sol.nextFreeSlot[op_machine]++] = op;
 
-			/* this date per machine table is needed for any EST_* binary relations */
-			this.datePerMachine[this.instance.machine(op.job, op.task)] += this.instance.duration(op.job, op.task);
+			/*  Any EST_* binary relations related processing need to keep track of 
+			 * the starting date of each task and the date at which each machine is available */
+			if (this.gbr == GreedyBinaryRelation.EST_SPT
+				|| this.gbr == GreedyBinaryRelation.EST_LPT
+				|| this.gbr == GreedyBinaryRelation.EST_SRPT
+				|| this.gbr == GreedyBinaryRelation.EST_LRPT) {
+
+				this.taskStartingDate[op.job][op.task] = this.getEarliestStartingTime(op);
+				this.machineAvailabilityDate[op_machine] += this.instance.duration(op);
+			}
 			/* Update the pending operations table by removing the chosen task */
 			this.updatePendingOperations(op);
 		}
@@ -130,15 +158,15 @@ public class GreedySolver implements Solver {
 	}
 
 	/*
-	 * Update the pending operations table by remove the chosen task 
+	 * Update the pending operations table by removing the chosen task 
 	 * @param chosen	The task which will be removed and which the search for
 	 *			new pending tasks will be based on	
 	 */
 	private void updatePendingOperations(Task chosen) {
 		this.pendingOperations.remove(this.pendingOperations.indexOf(chosen));
-		/* Maybe the task's job is now finished */
+		/* Maybe the task's job is not finished */
 		if (chosen.task < this.instance.numTasks - 1) {
-			/* The next job's task is pending */
+			/* The next job's task is now pending */
 			this.pendingOperations.add(new Task(chosen.job, chosen.task+1));
 		}
 	}
@@ -184,7 +212,7 @@ public class GreedySolver implements Solver {
 	}
 
 	/*
-	 * SPT, LPT, EST_SPT and EST_LPT general implementation.
+	 * Higher order SPT, LPT, EST_SPT and EST_LPT general implementation.
 	 * @param arr			Task array to be sorted
 	 * @param comparisonFunction	Binary relation function which will compare
 	 *				the current observed task with the optimum one 
@@ -206,29 +234,8 @@ public class GreedySolver implements Solver {
 		return optimum;
 	}
 
-	private void calculateRemainingProcessingTime(Task t) {
-		/*
-		if (t.task == 0) {
-			this.remainingProcessingTimes[t.job][t.task] = 0;
-			for (int task = t.task; task < this.instance.numTasks; task++) {
-				this.remainingProcessingTimes[t.job][t.task] += this.instance.duration(t.job, task);
-			}
-		} else {
-			this.remainingProcessingTimes[t.job][t.task] = this.remainingProcessingTimes[t.job][t.task] - this.instance.duration(t.job, t.task - 1);
-		}
-		*/
-		if (t.task == 0) {
-			this.remainingProcessingTimes[t.job][t.task] = 0;
-			for (int task = t.task + 1; task < this.instance.numTasks; task++) {
-				this.remainingProcessingTimes[t.job][t.task] += this.instance.duration(t.job, task);
-			}
-		} else {
-			this.remainingProcessingTimes[t.job][t.task] = this.remainingProcessingTimes[t.job][t.task] - this.instance.duration(t.job, t.task);
-		}
-	}
-
 	/*
-	 * SRPT, LRPT, EST_SRPT and EST_LRPT general implementation.
+	 * Higher order SRPT, LRPT, EST_SRPT and EST_LRPT general implementation.
 	 * @param arr			Task array to be sorted
 	 * @param comparisonFunction	Binary relation function which will compare
 	 *				the current observed task with the optimum one 
@@ -242,10 +249,6 @@ public class GreedySolver implements Solver {
 
 		for (int j = 1; j < arr.size(); j++) {
 			Task currentTask = arr.get(j);
-			/* The remaining processing time of that task has not been calculated yet */
-			if (this.remainingProcessingTimes[currentTask.job][currentTask.task] == -1) {
-				calculateRemainingProcessingTime(currentTask);
-			}
 
 			if (comparisonFunction.apply(currentTask, optimum).booleanValue()) {
 				optimum = arr.get(j);
@@ -263,7 +266,7 @@ public class GreedySolver implements Solver {
 	private Task getOptimalTask_SPT(ArrayList<Task> arr) {
 		return this.getOptimalTask_XPT(arr,
 				(Task current, Task optimum)
-				-> new Boolean(this.instance.duration(current.job, current.task) < this.instance.duration(optimum.job, optimum.task)));
+				-> new Boolean(this.instance.duration(current) < this.instance.duration(optimum)));
 	}
 
 	/*
@@ -274,7 +277,7 @@ public class GreedySolver implements Solver {
 	private Task getOptimalTask_LPT(ArrayList<Task> arr) {
 		return this.getOptimalTask_XPT(arr,
 				(Task current, Task optimum)
-				-> new Boolean(this.instance.duration(current.job, current.task) > this.instance.duration(optimum.job, optimum.task)));
+				-> new Boolean(this.instance.duration(current) > this.instance.duration(optimum)));
 	}
 
 	/*
@@ -299,6 +302,19 @@ public class GreedySolver implements Solver {
 				-> new Boolean(this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task]));
 	}
 
+
+
+	/*
+	 * Only for EST_* binary relations
+	 * @param t	The task we want to get the earliest starting time of
+	 */
+	private int getEarliestStartingTime(Task t) {
+		int est;
+		est = t.task == 0 ? 0 : this.taskStartingDate[t.job][t.task - 1] + this.instance.duration(t.job, t.task - 1);
+		est = Math.max(est, this.machineAvailabilityDate[this.instance.machine(t)]);
+		return est;
+	}
+
 	/*
 	 * EST_SPT implementation.
 	 * @param arr			Task array to be sorted
@@ -307,11 +323,14 @@ public class GreedySolver implements Solver {
 	private Task getOptimalTask_EST_SPT(ArrayList<Task> arr) {
 		return this.getOptimalTask_XPT(arr,
 				(Task current, Task optimum)
-				-> new Boolean(
-					this.datePerMachine[this.instance.machine(current.job, current.task)] < this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-					||
-					(this.datePerMachine[this.instance.machine(current.job, current.task)] == this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-					&& this.instance.duration(current.job, current.task) < this.instance.duration(optimum.job, optimum.task))));
+				->
+				{ 
+					int cest = this.getEarliestStartingTime(current);
+					int oest = this.getEarliestStartingTime(optimum);
+
+					return new Boolean((cest < oest) || (cest == oest && this.instance.duration(current) < this.instance.duration(optimum)));
+				}
+		);
 	}
 
 	/*
@@ -322,10 +341,14 @@ public class GreedySolver implements Solver {
 	private Task getOptimalTask_EST_LPT(ArrayList<Task> arr) {
 		return this.getOptimalTask_XPT(arr,
 				(Task current, Task optimum)
-				-> new Boolean(this.datePerMachine[this.instance.machine(current.job, current.task)] < this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-					||
-					(this.datePerMachine[this.instance.machine(current.job, current.task)] == this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-					&& this.instance.duration(current.job, current.task) > this.instance.duration(optimum.job, optimum.task))));
+				-> 
+				{ 
+					int cest = this.getEarliestStartingTime(current);
+					int oest = this.getEarliestStartingTime(optimum);
+
+					return new Boolean((cest < oest) || (cest == oest && this.instance.duration(current) > this.instance.duration(optimum)));
+				}
+		);
 	}
 
 	/*
@@ -336,10 +359,14 @@ public class GreedySolver implements Solver {
 	private Task getOptimalTask_EST_SRPT(ArrayList<Task> arr) {
 		return this.getOptimalTask_XRPT(arr,
 				(Task current, Task optimum)
-				-> new Boolean(this.datePerMachine[this.instance.machine(current.job, current.task)] < this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-						||
-				(this.datePerMachine[this.instance.machine(current.job, current.task)] == this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-				&& this.remainingProcessingTimes[current.job][current.task] < this.remainingProcessingTimes[optimum.job][optimum.task])));
+				-> 
+				{ 
+					int cest = this.getEarliestStartingTime(current);
+					int oest = this.getEarliestStartingTime(optimum);
+
+					return new Boolean((cest < oest) || (cest == oest && this.remainingProcessingTimes[current.job][current.task] < this.remainingProcessingTimes[optimum.job][optimum.task]));
+				}
+		);
 	}
 
 	/*
@@ -350,12 +377,14 @@ public class GreedySolver implements Solver {
 	private Task getOptimalTask_EST_LRPT(ArrayList<Task> arr) {
 		return this.getOptimalTask_XRPT(arr,
 				(Task current, Task optimum)
-				-> new Boolean(
-				this.datePerMachine[this.instance.machine(current.job, current.task)] < this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
+				-> 
+				{ 
+					int cest = this.getEarliestStartingTime(current);
+					int oest = this.getEarliestStartingTime(optimum);
 
-				||
-				(this.datePerMachine[this.instance.machine(current.job, current.task)] == this.datePerMachine[this.instance.machine(optimum.job, optimum.task)]
-				&& this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task])));
+					return new Boolean((cest < oest) || (cest == oest && this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task]));
+				}
+		);
 	}
 }
 
