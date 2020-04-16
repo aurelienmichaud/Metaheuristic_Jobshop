@@ -3,7 +3,7 @@ package jobshop.solvers;
 import jobshop.Instance;
 import jobshop.Result;
 import jobshop.Solver;
-//import jobshop.encodings.JobNumbers;
+
 import jobshop.encodings.ResourceOrder;
 import jobshop.encodings.Task;
 
@@ -15,7 +15,8 @@ import java.util.Random;
 import java.lang.Integer;
 import java.lang.Boolean;
 
-/** Greedy solver implementing SPT, LPT, SRPT and LRPT and EST_* prioritizing methods,
+/** 
+ * Greedy solver implementing SPT, LPT, SRPT and LRPT and EST_* prioritizing methods,
  * a randomness implementation for each of these binary relations can be enabled too.
  */
 public class GreedySolver implements Solver {
@@ -35,6 +36,13 @@ public class GreedySolver implements Solver {
 	/* The binary relation which defines how the operations (tasks)
 	 * will be sorted and prioritized */
 	private GreedyBinaryRelation gbr;	
+	/* The function which translates the chosen binary relation.
+	 * Used when sorting pending tasks in order to find the optimal one.
+	 * This function actually contains the binary relation and should tell us
+	 * whether the the first argument (currently analyzed task) is better than
+	 * the second argument (the current optimal task).
+	 * Therefore it takes two tasks, and return a boolean */
+	private BiFunction<Task, Task, Boolean> compareTwoTasks;
 
 
 	/* Randomness-enabled-only parameters */
@@ -68,7 +76,7 @@ public class GreedySolver implements Solver {
 	public GreedySolver(GreedyBinaryRelation gbr, int randomnessLevel) {
 		this.gbr = gbr;
 		this.randomnessLevel	= randomnessLevel;
-		this.randomness 	= (this.randomnessLevel > 0 	? true 			: false);
+		this.randomness 	= (this.randomnessLevel > 0 ? true : false);
 	}
 
 	/*
@@ -87,9 +95,6 @@ public class GreedySolver implements Solver {
 			Arrays.fill(this.machineAvailabilityDate, 0);
 
 			this.taskStartingDate = new int[this.instance.numJobs][this.instance.numTasks];
-			for (int job = 0; job < this.instance.numJobs; job++) {
-				Arrays.fill(this.taskStartingDate[job], -1);
-			}
 		}
 
 		/* XRPT binary relations look for the remaining processing time of each task
@@ -116,6 +121,72 @@ public class GreedySolver implements Solver {
 		for (int job = 0; job < this.instance.numJobs; job++) {
 			this.pendingOperations.add(new Task(job, 0));	
 		}
+
+		/* Setting the binary relation comparison function used when sorting the pending tasks */
+		switch (this.gbr) {
+			case SPT: 
+				this.compareTwoTasks = (Task current, Task optimum)
+					-> new Boolean(this.instance.duration(current) < this.instance.duration(optimum));
+				break;
+			case LPT: 
+				this.compareTwoTasks = (Task current, Task optimum)
+					-> new Boolean(this.instance.duration(current) > this.instance.duration(optimum));
+				break;
+			case SRPT: 
+				this.compareTwoTasks = (Task current, Task optimum)
+					-> new Boolean(this.remainingProcessingTimes[current.job][current.task] < this.remainingProcessingTimes[optimum.job][optimum.task]);
+				break;
+			case LRPT: 
+				this.compareTwoTasks = (Task current, Task optimum)
+					-> new Boolean(this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task]);
+				break;
+
+			case EST_SPT: 
+				this.compareTwoTasks = (Task current, Task optimum)
+					->
+					{ 
+						int cest = this.getEarliestStartingTime(current);
+						int oest = this.getEarliestStartingTime(optimum);
+
+						return new Boolean((cest < oest) || (cest == oest && this.instance.duration(current) < this.instance.duration(optimum)));
+					};
+				break;
+			case EST_LPT: 
+				this.compareTwoTasks = (Task current, Task optimum)
+					->
+					{ 
+						int cest = this.getEarliestStartingTime(current);
+						int oest = this.getEarliestStartingTime(optimum);
+
+						return new Boolean((cest < oest) || (cest == oest && this.instance.duration(current) > this.instance.duration(optimum)));
+					};
+				break;
+			case EST_SRPT:
+				this.compareTwoTasks = (Task current, Task optimum)
+					-> 
+					{ 
+						int cest = this.getEarliestStartingTime(current);
+						int oest = this.getEarliestStartingTime(optimum);
+
+						return new Boolean((cest < oest) || (cest == oest && this.remainingProcessingTimes[current.job][current.task] < this.remainingProcessingTimes[optimum.job][optimum.task]));
+					};
+				break;
+			case EST_LRPT:
+				this.compareTwoTasks = (Task current, Task optimum)
+					-> 
+					{ 
+						int cest = this.getEarliestStartingTime(current);
+						int oest = this.getEarliestStartingTime(optimum);
+
+						return new Boolean((cest < oest) || (cest == oest && this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task]));
+					};
+				break;
+			/* Should never happen */
+			default:
+				System.err.println("ERROR: Binary relation '" + this.gbr + "' not recognized");
+				System.exit(1);
+				break;
+		}
 	}
 
 	/**
@@ -132,7 +203,7 @@ public class GreedySolver implements Solver {
 
 		ResourceOrder sol = new ResourceOrder(instance);
 
-		while (/*System.currentTimeMillis() < deadline &&*/ !this.pendingOperations.isEmpty()) {
+		while (!this.pendingOperations.isEmpty()/* && System.currentTimeMillis() < deadline*/) {
 
 			Task op = this.getOptimalTask(this.pendingOperations);
 			int op_machine = instance.machine(op);
@@ -140,7 +211,7 @@ public class GreedySolver implements Solver {
 			/* feed our resource ordered solution with the newly found optimal task */
 			sol.tasksByMachine[op_machine][sol.nextFreeSlot[op_machine]++] = op;
 
-			/*  Any EST_* binary relations related processing need to keep track of 
+			/* Any EST_* binary relations related processing need to keep track of 
 			 * the starting date of each task and the date at which each machine is available */
 			if (this.gbr == GreedyBinaryRelation.EST_SPT
 				|| this.gbr == GreedyBinaryRelation.EST_LPT
@@ -182,7 +253,7 @@ public class GreedySolver implements Solver {
 		 * -	If the array contains at least 'this.randomnessLevel' elements,
 		 * 	then we randomly remove (arr.size()/this.randomnessLevel) elements
 		 *	from the array 'arr'. 
-		 * -	Otherwise we do not apply random operations  */
+		 * -	Otherwise we do not apply any random operations  */
 		if (this.randomness) {
 			if (this.randomnessLevel == 1) {
 				return arr.get(new Random().nextInt(arr.size()));
@@ -196,113 +267,18 @@ public class GreedySolver implements Solver {
 
 		} else { arg = arr; }
 
-		switch (this.gbr) {
-			case SPT: 	return this.getOptimalTask_SPT(arg);
-			case LPT: 	return this.getOptimalTask_LPT(arg);
-			case SRPT: 	return this.getOptimalTask_SRPT(arg);
-			case LRPT:	return this.getOptimalTask_LRPT(arg);
+		Task optimum = arg.get(0);
 
-			case EST_SPT: 	return this.getOptimalTask_EST_SPT(arg);
-			case EST_LPT: 	return this.getOptimalTask_EST_LPT(arg);
-			case EST_SRPT: 	return this.getOptimalTask_EST_SRPT(arg);
-			case EST_LRPT:	return this.getOptimalTask_EST_LRPT(arg);
-			/* Should never happen */
-			default:	return (arg.isEmpty() ? null : arg.get(0));
-		}
-	}
+		for (int j = 1; j < arg.size(); j++) {
+			Task currentTask = arg.get(j);
 
-	/*
-	 * Higher order SPT, LPT, EST_SPT and EST_LPT general implementation.
-	 * @param arr			Task array to be sorted
-	 * @param comparisonFunction	Binary relation function which will compare
-	 *				the current observed task with the optimum one 
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 * @see				java.util.function.Bifunction
-	 */
-	private Task getOptimalTask_XPT(ArrayList<Task> arr,
-					BiFunction<Task, Task, Boolean> comparisonFunction) {
-
-		Task optimum = arr.get(0);
-
-		for (int j = 1; j < arr.size(); j++) {
-			Task currentTask = arr.get(j);
-
-			if (comparisonFunction.apply(currentTask, optimum).booleanValue()) {
-				optimum = arr.get(j);
-			}	
-		}
-		return optimum;
-	}
-
-	/*
-	 * Higher order SRPT, LRPT, EST_SRPT and EST_LRPT general implementation.
-	 * @param arr			Task array to be sorted
-	 * @param comparisonFunction	Binary relation function which will compare
-	 *				the current observed task with the optimum one 
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 * @see				java.util.function.Bifunction
-	 */
-	private Task getOptimalTask_XRPT(ArrayList<Task> arr,
-					BiFunction<Task, Task, Boolean> comparisonFunction) {
-
-		Task optimum = arr.get(0);
-
-		for (int j = 1; j < arr.size(); j++) {
-			Task currentTask = arr.get(j);
-
-			if (comparisonFunction.apply(currentTask, optimum).booleanValue()) {
-				optimum = arr.get(j);
+			if (this.compareTwoTasks.apply(currentTask, optimum).booleanValue()) {
+				optimum = arg.get(j);
 			}	
 		}
 
 		return optimum;
 	}
-
-	/*
-	 * SPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_SPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XPT(arr,
-				(Task current, Task optimum)
-				-> new Boolean(this.instance.duration(current) < this.instance.duration(optimum)));
-	}
-
-	/*
-	 * LPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_LPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XPT(arr,
-				(Task current, Task optimum)
-				-> new Boolean(this.instance.duration(current) > this.instance.duration(optimum)));
-	}
-
-	/*
-	 * SRPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_SRPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XRPT(arr,
-				(Task current, Task optimum)
-				-> new Boolean(this.remainingProcessingTimes[current.job][current.task] < this.remainingProcessingTimes[optimum.job][optimum.task]));
-	}
-
-	/*
-	 * LRPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_LRPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XRPT(arr,
-				(Task current, Task optimum)
-				-> new Boolean(this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task]));
-	}
-
-
 
 	/*
 	 * Only for EST_* binary relations
@@ -313,78 +289,6 @@ public class GreedySolver implements Solver {
 		est = t.task == 0 ? 0 : this.taskStartingDate[t.job][t.task - 1] + this.instance.duration(t.job, t.task - 1);
 		est = Math.max(est, this.machineAvailabilityDate[this.instance.machine(t)]);
 		return est;
-	}
-
-	/*
-	 * EST_SPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_EST_SPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XPT(arr,
-				(Task current, Task optimum)
-				->
-				{ 
-					int cest = this.getEarliestStartingTime(current);
-					int oest = this.getEarliestStartingTime(optimum);
-
-					return new Boolean((cest < oest) || (cest == oest && this.instance.duration(current) < this.instance.duration(optimum)));
-				}
-		);
-	}
-
-	/*
-	 * EST_LPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_EST_LPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XPT(arr,
-				(Task current, Task optimum)
-				-> 
-				{ 
-					int cest = this.getEarliestStartingTime(current);
-					int oest = this.getEarliestStartingTime(optimum);
-
-					return new Boolean((cest < oest) || (cest == oest && this.instance.duration(current) > this.instance.duration(optimum)));
-				}
-		);
-	}
-
-	/*
-	 * EST_SRPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_EST_SRPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XRPT(arr,
-				(Task current, Task optimum)
-				-> 
-				{ 
-					int cest = this.getEarliestStartingTime(current);
-					int oest = this.getEarliestStartingTime(optimum);
-
-					return new Boolean((cest < oest) || (cest == oest && this.remainingProcessingTimes[current.job][current.task] < this.remainingProcessingTimes[optimum.job][optimum.task]));
-				}
-		);
-	}
-
-	/*
-	 * EST_LRPT implementation.
-	 * @param arr			Task array to be sorted
-	 * @return			The best task sorted according to the comparisonFunction binary relation
-	 */
-	private Task getOptimalTask_EST_LRPT(ArrayList<Task> arr) {
-		return this.getOptimalTask_XRPT(arr,
-				(Task current, Task optimum)
-				-> 
-				{ 
-					int cest = this.getEarliestStartingTime(current);
-					int oest = this.getEarliestStartingTime(optimum);
-
-					return new Boolean((cest < oest) || (cest == oest && this.remainingProcessingTimes[current.job][current.task] > this.remainingProcessingTimes[optimum.job][optimum.task]));
-				}
-		);
 	}
 }
 
