@@ -1,0 +1,96 @@
+{"solvers": [
+{
+"name": "basic",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//basic.stats.json"
+}
+,
+{
+"name": "descent",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descent.stats.json"
+}
+,
+{
+"name": "greedyestlpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlpt.stats.json"
+}
+,
+{
+"name": "greedyestlpt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlpt_random.stats.json"
+}
+,
+{
+"name": "greedyestlrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlrpt.stats.json"
+}
+,
+{
+"name": "greedyestlrpt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlrpt_random.stats.json"
+}
+,
+{
+"name": "greedyestspt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestspt.stats.json"
+}
+,
+{
+"name": "greedyestspt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestspt_random.stats.json"
+}
+,
+{
+"name": "greedyestsrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestsrpt.stats.json"
+}
+,
+{
+"name": "greedyestsrpt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestsrpt_random.stats.json"
+}
+,
+{
+"name": "greedylpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedylpt.stats.json"
+}
+,
+{
+"name": "greedylpt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedylpt_random.stats.json"
+}
+,
+{
+"name": "greedylrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedylrpt.stats.json"
+}
+,
+{
+"name": "greedylrpt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedylrpt_random.stats.json"
+}
+,
+{
+"name": "greedyspt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyspt.stats.json"
+}
+,
+{
+"name": "greedyspt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyspt_random.stats.json"
+}
+,
+{
+"name": "greedysrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedysrpt.stats.json"
+}
+,
+{
+"name": "greedysrpt_random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedysrpt_random.stats.json"
+}
+,
+{
+"name": "random",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//random.stats.json"
+}
+]}

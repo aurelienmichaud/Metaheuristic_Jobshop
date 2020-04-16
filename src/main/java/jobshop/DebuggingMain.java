@@ -37,12 +37,7 @@ public class DebuggingMain {
 			System.out.println("VALID: " + sched.isValid());
 			System.out.println("MAKESPAN: " + sched.makespan());
 
-			ResourceOrder ro = new ResourceOrder(instance);
-			ro.fromSchedule(sched);
-
-			Task[][] t = ro.getResourceOrderMatrix();
-
-			System.out.println("reformed sched : " + ro.toSchedule());
+			System.out.println("RESOURCEORDER : " + new ResourceOrder(sched));
 
 		} catch (IOException e) {
 			e.printStackTrace();

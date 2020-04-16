@@ -4,156 +4,129 @@ import jobshop.Encoding;
 import jobshop.Instance;
 import jobshop.Schedule;
 
-import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 public class ResourceOrder extends Encoding {
 
-	private Task[][] resourceOrderMatrix; /* ROM */
+    // for each machine m, taskByMachine[m] is an array of tasks to be
+    // executed on this machine in the same order
+    public final Task[][] tasksByMachine;
 
-	/**
-	 * ResourceOrder constructor.
-	 * @param instance	The instance problem
-	 */
-	public ResourceOrder(Instance instance) {
-		super(instance);
+    // for each machine, indicate on many tasks have been initialized
+    public final int[] nextFreeSlot;
 
-		this.resourceOrderMatrix = new Task[this.instance.numMachines][this.instance.numJobs];
-	}
+    /** Creates a new empty resource order. */
+    public ResourceOrder(Instance instance)
+    {
+        super(instance);
 
-	public ResourceOrder(Schedule sc) {
-		super(sc.pb);
+        // matrix of null elements (null is the default value of objects)
+        tasksByMachine = new Task[instance.numMachines][instance.numJobs];
 
-		this.resourceOrderMatrix = new Task[this.instance.numMachines][this.instance.numJobs];
+        // no task scheduled on any machine (0 is the default value)
+        nextFreeSlot = new int[instance.numMachines];
+    }
 
-		this.fromSchedule(sc);
-	}
+    /** Creates a resource order from a schedule. */
+    public ResourceOrder(Schedule schedule)
+    {
+        super(schedule.pb);
+        Instance pb = schedule.pb;
 
-	/**
-	 * ResourceOrder constructor.
-	 * @param instance	The instance problem
-	 * @param sc		The shedule which we infer the resource order matrix from
-	 */
-	public ResourceOrder(Instance instance, Schedule sc) {
-		super(instance);
+        this.tasksByMachine = new Task[pb.numMachines][];
+        this.nextFreeSlot = new int[instance.numMachines];
 
-		this.resourceOrderMatrix = new Task[this.instance.numMachines][this.instance.numJobs];
+        for(int m = 0 ; m<schedule.pb.numMachines ; m++) {
+            final int machine = m;
 
-		this.fromSchedule(sc);
-	}
+            // for thi machine, find all tasks that are executed on it and sort them by their start time
+            tasksByMachine[m] =
+                    IntStream.range(0, pb.numJobs) // all job numbers
+                            .mapToObj(j -> new Task(j, pb.task_with_machine(j, machine))) // all tasks on this machine (one per job)
+                            .sorted(Comparator.comparing(t -> schedule.startTime(t.job, t.task))) // sorted by start time
+                            .toArray(Task[]::new); // as new array and store in tasksByMachine
 
-	public Task[][] getResourceOrderMatrix() {
-		return this.resourceOrderMatrix;
-	}
+            // indicate that all tasks have been initialized for machine m
+            nextFreeSlot[m] = instance.numJobs;
+        }
+    }
 
-	/**
-	 * Translate the resource order matrix into a schedule
-	 * @return	Schedule built from the resource order matrix
-	 */
-	public Schedule toSchedule() {
-		/* For each machine, it stores the time at which the resource is available */
-		int[] nextFreeTimeResource = new int[this.instance.numMachines];
-		/* For each job, it stores the pending task */
-		int[] nextTask = new int[this.instance.numJobs];
-		/* For each task, it stores the time at which they will be started */
-		int[][] startTimes = new int[this.instance.numJobs][this.instance.numTasks];
-		/* For each machine, all the consecutive jobs which have a task that require that machine */
-		int[] jobs = new int[this.instance.numJobs * this.instance.numMachines];
+    @Override
+    public Schedule toSchedule() {
+        // indicate for each task that have been scheduled, its start time
+        int [][] startTimes = new int [instance.numJobs][instance.numTasks];
 
-		for (int i = 0, machine = 0; machine < this.instance.numMachines; machine++) {
-			for (int job = 0; job < this.instance.numJobs; job++, i++) {
-				jobs[i] = this.resourceOrderMatrix[machine][job].job;
-			}
-		}
+        // for each job, how many tasks have been scheduled (0 initially)
+        int[] nextToScheduleByJob = new int[instance.numJobs];
 
-		for (int job : jobs) {
-			int task = nextTask[job];
-			int machine = this.instance.machine(job, task);
+        // for each machine, how many tasks have been scheduled (0 initially)
+        int[] nextToScheduleByMachine = new int[instance.numMachines];
 
-			int est = (task == 0) ? 0 : startTimes[job][task-1] + this.instance.duration(job, task-1);
-
-			est = Math.max(est, nextFreeTimeResource[machine]);
-	
-			startTimes[job][task] = est;
-			nextFreeTimeResource[machine] = est + this.instance.duration(job, task);
-			nextTask[job] = task + 1;
-		}	
-
-		Schedule s = new Schedule(this.instance, startTimes);
-		if (s.isValid())
-			return s;
-		return null;
-	}
-
-	/**
-	 * Translate a schedule into the resource order matrix
-	 * @param sc	Schedule translated into the resource order matrix
-	 */
-	public void fromSchedule(Schedule sc) {
-
-		if (sc == null) { return; }
-		if (!sc.pb.equals(this.instance)) {
-			System.out.println("[jobshop.encodings.ResourceOrder.fromSchedule(Schedule sc)] - ERROR: parameter Schedule does not have the same instance as ResourceOrder object.");
-			return;
-		}
+        // for each machine, earliest time at which the machine can be used
+        int[] releaseTimeOfMachine = new int[instance.numMachines];
 
 
-		for (int machine = 0; machine < this.instance.numMachines; machine++) {
-			for (int job = 0; job < this.instance.numJobs; job++) {
-				this.resourceOrderMatrix[machine][job] = new Task(job, this.instance.task_with_machine(job, machine));
-			}
-		}
+        // loop while there remains a job that has unscheduled tasks
+        while(IntStream.range(0, instance.numJobs).anyMatch(m -> nextToScheduleByJob[m] < instance.numTasks)) {
 
-		/* We now need to get our matrix in order and sort it according
-		 * to the ascending task starting time for each machine */
-		this.sortROMFromSchedule(sc);
-	}
+            // selects a task that has noun scheduled predecessor on its job and machine :
+            //  - it is the next to be schedule on a machine
+            //  - it is the next to be scheduled on its job
+            // if there is no such task, we have cyclic dependency and the solution is invalid
+            Optional<Task> schedulable =
+                    IntStream.range(0, instance.numMachines) // all machines ...
+                    .filter(m -> nextToScheduleByMachine[m] < instance.numJobs) // ... with unscheduled jobs
+                    .mapToObj(m -> this.tasksByMachine[m][nextToScheduleByMachine[m]]) // tasks that are next to schedule on a machine ...
+                    .filter(task -> task.task == nextToScheduleByJob[task.job])  // ... and on their job
+                    .findFirst(); // select the first one if any
 
-	/*
-	 * Sort the resource order matrix in ascending task starting time for each machine
-	 * @param sc	Base schedule which is used to get the starting time of each task
-	 */
-	private void sortROMFromSchedule(Schedule sc) {
+            if(schedulable.isPresent()) {
+                // we found a schedulable task, lets call it t
+                Task t = schedulable.get();
+                int machine = instance.machine(t.job, t.task);
 
-		if (sc == null) { return; }
+                // compute the earliest start time (est) of the task
+                int est = t.task == 0 ? 0 : startTimes[t.job][t.task-1] + instance.duration(t.job, t.task-1);
+                est = Math.max(est, releaseTimeOfMachine[instance.machine(t)]);
+                startTimes[t.job][t.task] = est;
 
-		for (int machine = 0; machine < this.instance.numMachines; machine++) {
-			for (int column = 0; column < this.instance.numJobs; column++) {
+                // mark the task as scheduled
+                nextToScheduleByJob[t.job]++;
+                nextToScheduleByMachine[machine]++;
+                // increase the release time of the machine
+                releaseTimeOfMachine[machine] = est + instance.duration(t.job, t.task);
+            } else {
+                // no tasks are schedulable, there is no solution for this resource ordering
+                return null;
+            }
+        }
+        // we exited the loop : all tasks have been scheduled successfully
+        return new Schedule(instance, startTimes);
+    }
 
-				int min_index = column;
+    /** Creates an exact copy of this resource order. */
+    public ResourceOrder copy() {
+        return new ResourceOrder(this.toSchedule());
+    }
 
-				for (int i = column + 1; i < this.instance.numJobs; i++) {
+    @Override
+    public String toString()
+    {
+        StringBuilder s = new StringBuilder();
+        for(int m=0; m < instance.numMachines; m++)
+        {
+            s.append("Machine ").append(m).append(" : ");
+            for(int j=0; j<instance.numJobs; j++)
+            {
+                s.append(tasksByMachine[m][j]).append(" ; ");
+            }
+            s.append("\n");
+        }
 
-					Task min 	= this.resourceOrderMatrix[machine][min_index];
-					Task current 	= this.resourceOrderMatrix[machine][i];
+        return s.toString();
+    }
 
-					if (sc.startTime(current.job, current.task) < sc.startTime(min.job, min.task)) {
-						min_index = i;
-					}
-				}
-
-				Task tmp = this.resourceOrderMatrix[machine][column];
-				this.resourceOrderMatrix[machine][column] 	= this.resourceOrderMatrix[machine][min_index];
-				this.resourceOrderMatrix[machine][min_index] = tmp;
-			}
-		}
-		
-	}
-
-	public ResourceOrder copy() {
-		return new ResourceOrder(this.toSchedule());
-	}
-
-	@Override
-	public String toString() {
-		StringBuilder s = new StringBuilder();
-		for (int m = 0; m < this.instance.numMachines; m++) {
-			s.append("Machine ").append(m).append(" : ");
-			for (int j = 0; j < this.instance.numJobs; j++) {
-				s.append(this.resourceOrderMatrix[m][j]).append(" ; ");
-			}
-			s.append("\n");
-		}
-		return s.toString();
-	}
 }
 

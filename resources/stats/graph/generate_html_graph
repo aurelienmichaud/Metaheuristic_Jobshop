@@ -1,7 +1,7 @@
 #!/bin/sh
 
 out=index.html
-colors=( "beautiblue" "red" "pink" "black" "blue" "green" "orange" "yellow" "grey" "purple" "greenish" "magenta" "brown" "dark_blue" "dark_red" "dark_grey" "dark_green" "beige")
+colors=( "beautiblue" "red" "pink" "black" "blue" "green" "orange" "yellow" "grey" "purple" "greenish" "magenta" "brown" "dark_blue" "dark_red" "dark_grey" "dark_green" "beige" "other")
 
 make_dataset () {
 
@@ -47,7 +47,7 @@ pre () {
 
 	firsttime="1"
 	# Take the first stat file and get all the instances that have worked
-	for instance in $(echo ../`ls -1 ../ | grep -E "*.stats" | head -n 1` | xargs cat | awk -c '{ print $1 }'); do
+	for instance in $(echo ../`ls -1 ../ | grep -E "*[.]stats$" | head -n 1` | xargs cat | awk -c '{ print $1 }'); do
 		if [[ $instance != "README.md" ]]; then
 			if [[ $firsttime != "1" ]]; then
 				echo -n ", " >> $out
@@ -78,7 +78,7 @@ parse_solvers_stats () {
 	firsttime="1"
 	colorindex=0
 
-	for solver in $(ls -1 ../ | grep ".stats"); do
+	for solver in $(ls -1 ../ | grep -E "[.]stats$"); do
 		if [[ $firsttime != "1" ]]; then
 			echo -n ", " >> $out
 		fi

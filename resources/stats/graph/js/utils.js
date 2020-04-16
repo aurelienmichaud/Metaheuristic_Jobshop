@@ -18,7 +18,8 @@ window.chartColors = {
 	dark_red: 'rgb(89, 1, 4)',
 	dark_grey: 'rgb(38, 38, 38)',
 	dark_green: 'rgb(0, 84, 16)',
-	beige: 'rgb(207, 211, 120)'
+	beige: 'rgb(207, 211, 120)',
+	other: 'rgb(198, 103, 202)'
 };
 
 (function(global) {

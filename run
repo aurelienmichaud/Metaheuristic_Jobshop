@@ -9,8 +9,6 @@ svg_dir=$stats_dir/instances_SVGs/
 graph_dir=$stats_dir/graph/
 
 
-
-
 usage () {
 	echo "Usage:"
 	echo -e "$0 main [--solver] SOLVER [--instance] INSTANCE\t\t: Run SOLVER algorithm on instance INSTANCE. Please run '$0 main' for more information"
@@ -18,6 +16,7 @@ usage () {
 	echo -e "$0 test Your.Package.TestClass\t\t\t\t: Run JUnit test class"
 	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the solver running on ALL instances. Please run '$0 stats' for information on averages"
 	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
+	echo -e "$0 build\t\t\t\t\t\t\t: gradle build"
 	echo -e "$0 graph best|runtime|makespan|distance\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
 	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in firefox"
 	exit 1
@@ -64,6 +63,9 @@ usage_graph () {
 }
 
 
+#########################################
+# 		./run main		#
+#########################################
 
 build_main () {
 	gradle build || exit 1
@@ -107,6 +109,11 @@ run_main () {
 	launch_main || (build_main && launch_main)
 }
 
+
+#########################################
+# 		./run other		#
+#########################################
+
 build_other () {
 	cd $base_dir && gradle build
 }
@@ -115,6 +122,7 @@ launch_other () {
 
 	cd $1 && (java $2)
 }
+
 
 run_other () {
 	class_dir="$build_dir/classes/java/main/"
@@ -138,6 +146,10 @@ run_other () {
 	launch_other $class_dir $class || (build_other && launch_other $class_dir $class)
 }
 
+#########################################
+# 		./run test		#
+#########################################
+
 run_test () {
 
 	if [[ $# -ne 1 ]]; then
@@ -153,23 +165,144 @@ run_test () {
 	firefox	./build/reports/tests/test/index.html
 }
 
+
+#########################################
+# 		./run stats		#
+#########################################
+
+solver_stat_file_extension=".stats"
+available_instance_json_file="$stats_dir/instances.json"
+# We have a file listing all the solvers which have been './run stats'ed
+# So that the JavaScript json parser will know exactly what file to fetch
+# in order to get those statistics
+available_solver_stats_file="$stats_dir/available_solver_stats"
+available_solver_stats_file_json="$available_solver_stats_file.json"
+
+available_solver_stats_file_to_json () {
+
+	firsttime=1
+
+	echo "{\"solvers\": [" > $available_solver_stats_file_json
+
+	while read solver json_file_path; do
+		if [[ $firsttime -eq 0 ]]; then
+			echo "," >> $available_solver_stats_file_json
+		else
+			firsttime=0
+		fi
+		(
+			echo "{"
+			echo "\"name\": \"$solver\","
+			echo "\"path\": \"$json_file_path\""
+			echo "}"
+		) >> $available_solver_stats_file_json
+	done < $available_solver_stats_file
+
+	echo "]}" >> $available_solver_stats_file_json
+}
+
+# $1	: solver name
+# $2	: json stats file path
+add_available_solver_stats_json () {
+
+	(touch $available_solver_stats_file && cat $available_solver_stats_file && echo "$1 $2") | sort -u -o "$available_solver_stats_file"
+
+	available_solver_stats_file_to_json
+}
+
+# $1	: json file which we will write into
+# $2	: solver name
+open_json_file () {
+	(
+		echo "{"
+		echo "\"solver\": \"$2\","
+		echo "\"stats\":["
+	) > $1
+}
+
+# $1	: json file which we will write (append) into
+# $2	: instance name
+# $3	: size
+# $4 	: best
+# $5	: runtime
+# $6	: makespan
+# $7	: distance
+write_run_into_json () {
+	(
+		echo "{"
+			echo "\"instance\": \"$2\","
+			echo "\"size\": \"$3\","
+			echo "\"best\": $4,"
+			echo "\"runtime\": $5,"
+			echo "\"makespan\": $6,"
+			echo "\"distance\": $7"
+		echo "}"
+	) >> $1
+}
+
+# $1	: json file which we will write into
+close_json_file () {
+	echo "]}" >> $1
+}
+
+# $1	: stats file which will be translated
+# $2	: json file which will be written
+# $3	: solver name
+stats2json () {
+
+	echo "{ \"instances\" : [" > $available_instance_json_file
+
+	open_json_file $2 $3
+
+	firsttime=1
+	while read instance size best runtime makespan distance; do
+		if [[ $firsttime -eq 0 ]]; then
+			echo "," >> $output_json
+			echo "," >> $available_instance_json_file
+		else
+			firsttime=0
+		fi
+		write_run_into_json $2 $instance $size $best $runtime $makespan $distance
+		echo "\"$instance\"" >> $available_instance_json_file
+	done < $1
+
+	close_json_file $2
+
+	echo "]}" >> $available_instance_json_file
+}
+
+# $1	: solver name
+# OR
+# $1	: 'average'
+# $2 	: the number of times we will run the solver on each instance
+#	  in order to get the average
+# $3 	: solver name
 run_stats () {
 
+	# Only one argument means casual statistics
 	if [[ $# -eq 1 ]]; then
 
-		output_stat_file=$stats_dir/$1.stats
+		output_stat_file="$stats_dir/$1$solver_stat_file_extension"
 
 		for instance in $(ls -1 $instances_dir); do
 			if [[ $instance != "README.md" ]]; then
 				line=$($base_dir/run main $1 $instance | grep $instance)
-				echo $line >> $output_stat_file
-				echo "> $instance <"
+
+				if [[ $line != "" ]]; then
+
+					echo $line >> $output_stat_file
+					echo "> $instance <"
+				fi
 			fi
 		done
 
+
+	# './run stats average NB SOLVER' means we need to run the solver SOLVER
+	# NB times on each instance and provide an average result
 	elif [[ $# -eq 3 ]] && [[ $1 == "average" ]] && [[ $2 != "0" ]]; then
 
-		output_stat_file="$stats_dir/$3_average.stats"
+		output_stat_file="$stats_dir/$3$solver_stat_file_extention"
+
 		echo "" > $output_stat_file
 
 		echo "=== AVERAGING RESULTS OF $3 ($output_stat_file) ==="
@@ -227,7 +360,16 @@ run_stats () {
 		usage_stats
 	fi
 
+	output_json="$output_stat_file.json"
+	add_available_solver_stats_json $1 $output_json
+
+	stats2json $output_stat_file $output_json $1
 }
+
+
+#########################################
+# 		./run graph		#
+#########################################
 
 run_graph () {
 	if [[ $# -eq 0 ]]; then
@@ -235,6 +377,11 @@ run_graph () {
 	fi
 	cd $graph_dir && ./generate_html_graph $1
 }
+
+
+#########################################
+# 		./run draw		#
+#########################################
 
 write_svg_start () {
 	echo "START -> <J$2,T$3,M$4> [label = \"\"]" >> $1
@@ -250,6 +397,14 @@ write_svg_end () {
 
 # Translate an instance file into a svg graph file
 run_draw () {
+
+	# Test wether the 'dot' command is installed
+	which dot &> /dev/null
+	# Otherwise we can't write the svg file
+	if [[ $? -eq 1 ]]; then
+		echo "'dot' command not found, please install 'dot' utility in order to produce svg content"
+		exit 1
+	fi
 
 	if [[ $# -eq 0 ]]; then
 		usage_draw
@@ -305,6 +460,12 @@ run_draw () {
 	done
 }
 
+
+
+#########################################
+# 		./run *			#
+#########################################
+
 if [[ $# -lt 1 ]]; then
 	usage
 fi
@@ -335,6 +496,10 @@ case "$1" in
 
 	"clean")
 		gradle clean
+		;;
+
+	"build")
+		gradle build
 		;;
 
 	"draw")

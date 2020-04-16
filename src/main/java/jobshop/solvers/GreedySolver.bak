@@ -3,8 +3,7 @@ package jobshop.solvers;
 import jobshop.Instance;
 import jobshop.Result;
 import jobshop.Solver;
-//import jobshop.encodings.JobNumbers;
-import jobshop.encodings.ResourceOrder;
+import jobshop.encodings.JobNumbers;
 import jobshop.encodings.Task;
 
 import java.util.ArrayList;
@@ -15,9 +14,7 @@ import java.util.Random;
 import java.lang.Integer;
 import java.lang.Boolean;
 
-/** Greedy solver implementing SPT, LPT, SRPT and LRPT and EST_* prioritizing methods,
- * a randomness implementation for each of these binary relations can be enabled too.
- */
+/* Greedy solver implementing SPT, LPT, SRPT and LRPT and EST_* prioritizing methods */
 public class GreedySolver implements Solver {
 
 
@@ -52,7 +49,6 @@ public class GreedySolver implements Solver {
 	 * @see		jobshop.solvers.GreedyBinaryRelation
 	 */
 	public GreedySolver(GreedyBinaryRelation gbr) { this.gbr = gbr; }
-
 	/**
 	 * Instantiate a Greedy Solver.
 	 * @param gbr			The binary relation which defines how the operations (tasks)
@@ -111,18 +107,15 @@ public class GreedySolver implements Solver {
 
 		this.init(instance);
 
-		ResourceOrder sol = new ResourceOrder(instance);
+		JobNumbers sol = new JobNumbers(instance);
 
 		while (!this.pendingOperations.isEmpty()) {
-
 			Task op = this.getOptimalTask(this.pendingOperations);
-			int op_machine = instance.machine(op.job, op.task);
-			/* feed our resource ordered solution with the newly found optimal task */
-			sol.tasksByMachine[op_machine][sol.nextFreeSlot[op_machine]++] = op;
-
+			
+			sol.jobs[sol.nextToSet++] = op.job;
 			/* this date per machine table is needed for any EST_* binary relations */
 			this.datePerMachine[this.instance.machine(op.job, op.task)] += this.instance.duration(op.job, op.task);
-			/* Update the pending operations table by removing the chosen task */
+			/* Update the pending operations table by remove the chosen task */
 			this.updatePendingOperations(op);
 		}
 
@@ -206,27 +199,6 @@ public class GreedySolver implements Solver {
 		return optimum;
 	}
 
-	private void calculateRemainingProcessingTime(Task t) {
-		/*
-		if (t.task == 0) {
-			this.remainingProcessingTimes[t.job][t.task] = 0;
-			for (int task = t.task; task < this.instance.numTasks; task++) {
-				this.remainingProcessingTimes[t.job][t.task] += this.instance.duration(t.job, task);
-			}
-		} else {
-			this.remainingProcessingTimes[t.job][t.task] = this.remainingProcessingTimes[t.job][t.task] - this.instance.duration(t.job, t.task - 1);
-		}
-		*/
-		if (t.task == 0) {
-			this.remainingProcessingTimes[t.job][t.task] = 0;
-			for (int task = t.task + 1; task < this.instance.numTasks; task++) {
-				this.remainingProcessingTimes[t.job][t.task] += this.instance.duration(t.job, task);
-			}
-		} else {
-			this.remainingProcessingTimes[t.job][t.task] = this.remainingProcessingTimes[t.job][t.task] - this.instance.duration(t.job, t.task);
-		}
-	}
-
 	/*
 	 * SRPT, LRPT, EST_SRPT and EST_LRPT general implementation.
 	 * @param arr			Task array to be sorted
@@ -244,7 +216,10 @@ public class GreedySolver implements Solver {
 			Task currentTask = arr.get(j);
 			/* The remaining processing time of that task has not been calculated yet */
 			if (this.remainingProcessingTimes[currentTask.job][currentTask.task] == -1) {
-				calculateRemainingProcessingTime(currentTask);
+				this.remainingProcessingTimes[currentTask.job][currentTask.task] = 0;
+				for (int task = currentTask.task; task < this.instance.numTasks; task++) {
+					this.remainingProcessingTimes[currentTask.job][currentTask.task] += this.instance.duration(currentTask.job, task);
+				}
 			}
 
 			if (comparisonFunction.apply(currentTask, optimum).booleanValue()) {

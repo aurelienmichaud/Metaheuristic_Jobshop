@@ -27,6 +27,8 @@ public class Main {
 		solvers.put("basic",		new BasicSolver());
 		solvers.put("random", 		new RandomSolver());
 
+		solvers.put("descent", 		new DescentSolver());
+
 		solvers.put("greedyspt", 	new GreedySolver(GreedyBinaryRelation.SPT));
 		solvers.put("greedylpt", 	new GreedySolver(GreedyBinaryRelation.LPT));
 		solvers.put("greedysrpt",	new GreedySolver(GreedyBinaryRelation.SRPT));
@@ -46,6 +48,7 @@ public class Main {
 		solvers.put("greedyestlpt_random", 	new GreedySolver(GreedyBinaryRelation.EST_LPT, DEFAULT_RANDOMNESS_LEVEL));
 		solvers.put("greedyestsrpt_random",	new GreedySolver(GreedyBinaryRelation.EST_SRPT, DEFAULT_RANDOMNESS_LEVEL));
 		solvers.put("greedyestlrpt_random", 	new GreedySolver(GreedyBinaryRelation.EST_LRPT, DEFAULT_RANDOMNESS_LEVEL));
+
 		// add new solvers here
 	}
 
