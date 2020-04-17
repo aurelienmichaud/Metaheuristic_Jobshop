@@ -65,10 +65,22 @@
 		label {
 			width: 100%;
 		}
+		.stat_setting_label {
+			width: 100%;
+			padding: 5px;
+			margin: 10px;
+			background-color: #eee;
+			border: 1px solid #ccc;
+		}
+
+		.stat_setting_label:hover {
+			background-color: #eeffee;
+		}
+
 		td:hover {
 			background-color: #eeffee;
 		}
-		input[type="checkbox"] {
+		input[type="checkbox"], input[type="radio"] {
 			margin-right: 10px;
 		}
 		#interface_buttons {
@@ -83,21 +95,12 @@
 			padding: 15px 32px;
 			text-align: center;
 			text-decoration: none;
-			display: inline-block;
 		}
-		#button_check_all:hover, #button_uncheck_all:hover {
-			background-color: #0074aa;
-		}
-		#button_check_all {
-			margin-left: auto;
-		}
-		#button_uncheck_all {
-			margin-right: auto;
-		}
-
 	</style>
 </head>
 <body>
+	<div id="stat_settings_container">
+	</div>
 	<div style="width:100%;">
 		<div class="chartjs-size-monitor">
 			<div class="chartjs-size-monitor-expand">
@@ -181,16 +184,18 @@
 				return instances;
 		})();
 		// Fetch all the solver's stats
-		var _datasets = (function () {
+		function fetchAllData(stat_setting) {
 				var datasets = [];
 				$.getJSON(available_solver_stats_json_file, function(data) {
 					$.each(data.solvers, function(index, solver) {
 						solver_list.push(solver.name);
-						datasets.push(fetchSolverDataset(solver.name, solver.path, "distance"));
+						datasets.push(fetchSolverDataset(solver.name, solver.path, stat_setting));
 					});
 				});
 				return datasets;
-		})();
+		}
+
+		var _datasets = fetchAllData("distance");
 
 		var _options = {
 				responsive: true,
@@ -244,6 +249,13 @@
 		function addDataset(solver_name) {
 			var index = -1;
 			var i;
+
+			for (i = 0; i < config.data.datasets.length; i++) {
+				if (config.data.datasets[i].label === solver_name)	{
+					return;
+				}
+			}
+
 			for (i = 0; i < _datasets.length; i++) {
 				if (_datasets[i].label === solver_name)	{
 					index = i;
@@ -269,41 +281,59 @@
 			}
 			if (index > -1) {
 				config.data.datasets.splice(index, 1);
+				window.chart.update();
 			}
 
-			window.chart.update();
 		}
 
 		function createInterface() {
 
-			var table_col_nb = 6;
-			var row = 0;
-			var col = 0;
+			stat_settings = [
+				"best",
+				"runtime",
+				"makespan",
+				"distance"
+			];
+			for (setting of stat_settings) {
+				$("#stat_settings_container").append('<label class="stat_setting_label" for="radio_' + setting + '" id="label_' + setting + '">');
+				$("#label_" + setting).append('<input type="radio" name="stat_setting" id="radio_' + setting + '" value="' + setting + '">' + setting);
+				$("#radio_" + setting).change(function () {
+					_datasets = fetchAllData($(this).prop("value"));
+					config.data.datasets = Array.from(_datasets);
+					$('input[type=checkbox]').each(function() {
+						$(this).prop('checked', true);
+					});
+					window.chart.update();
+				});
+			}
+
+			$("#radio_" + "distance").prop("checked", true);
+
 
 			$("#interface").append('<div id="interface_buttons">');
+
 			$("#interface_buttons").append('<button id="button_check_all">All</button>');
 			$("#interface_buttons").append('<button id="button_uncheck_all">None</button>');
 
 			$("#button_check_all").click(function() {
 				$('input[type=checkbox]').each(function() {
-					if (!$(this).prop('checked')) {
-						$(this).prop('checked', true).trigger('change');
-					}
+					$(this).prop('checked', true).trigger('change');
 				});
 			});
 			$("#button_uncheck_all").click(function() {
 				$('input[type=checkbox]').each(function() {
-					if ($(this).prop('checked')) {
-						$(this).prop('checked', false).trigger('change');
-					}
+					$(this).prop('checked', false).trigger('change');
 				});
 			});
 			
+			var table_col_nb = 6;
+			var row = 0;
+			var col = 0;
+
 			$("#interface").append('<table id="interface_table">');
 			$("#interface_table").append('<tr id="interface_table_row_' + row + '">');
 			$.each(solver_list, function (index, solver_name) {
 
-				console.log(solver_name);
 				if (col == table_col_nb) {
 					row += 1;
 					$("#interface_table").append('<tr id="interface_table_row_' + row + '">');
@@ -313,8 +343,7 @@
 				$('#interface_table_row_' + row).append('<td id="interface_table_row_' + row + '_col_' + col + '">');
 				$('#interface_table_row_' + row + '_col_' + col).append('<label for="checkbox_' + solver_name + '" class="checkbox_label" id="checkbox_' + row + '' + col + '">')
 				$('#checkbox_' + row + '' + col).append('<input type="checkbox" name="checkbox_' + solver_name + '" id="checkbox_' + solver_name + '" checked>' + solver_name)
-				//$('#interface_table_row_' + row + '_col_' + col).append('<input type="checkbox" name="checkbox_' + solver_name + '" id="checkbox_' + solver_name + '">')
-				//$('#interface_table_row_' + row + '_col_' + col).append('<label for="checkbox_' + solver_name + '" class="checkbox_label">' + solver_name + '</label><br>')
+
 				$("#checkbox_" + solver_name)
 					.change(function() {
 						if (this.checked) {
