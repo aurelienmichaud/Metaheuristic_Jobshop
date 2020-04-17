@@ -80,7 +80,7 @@ public class GreedySolver implements Solver {
 	}
 
 	/*
-	 * Init the basic elements arrays, should be called inside this.solve(Instance) function,
+	 * Initialize the basic elements arrays, should be called inside this.solve(Instance) function,
 	 * since it is the starting point at which we know the instance which we will work on
 	 */
 	private void init(Instance instance) {
@@ -97,9 +97,7 @@ public class GreedySolver implements Solver {
 			this.taskStartingDate = new int[this.instance.numJobs][this.instance.numTasks];
 		}
 
-		/* XRPT binary relations look for the remaining processing time of each task
-		 * We instantiate the table with (-1) values and they will be calculated only once,
-		 * while the algorithm is running */
+		/* XRPT binary relations look for the remaining processing time of each task */
 		if (this.gbr == GreedyBinaryRelation.SRPT
 			|| this.gbr == GreedyBinaryRelation.LRPT
 			|| this.gbr == GreedyBinaryRelation.EST_SRPT
@@ -107,7 +105,7 @@ public class GreedySolver implements Solver {
 
 			this.remainingProcessingTimes = new int[this.instance.numJobs][this.instance.numTasks];
 			/* The remaining processing time of one task is basically the sum of the duration of 
-			 * the remaining tasks on the same job */
+			 * the remaining tasks of the same job */
 			for (int job = 0; job < this.instance.numJobs; job++) {
 				this.remainingProcessingTimes[job][this.instance.numTasks - 1] = this.instance.duration(job, this.instance.numTasks - 1);
 				for (int task = this.instance.numTasks - 2; task >= 0; task--) {
@@ -253,13 +251,13 @@ public class GreedySolver implements Solver {
 		 * -	If the array contains at least 'this.randomnessLevel' elements,
 		 * 	then we randomly remove (arr.size()/this.randomnessLevel) elements
 		 *	from the array 'arr'. 
-		 * -	Otherwise we do not apply any random operations  */
+		 * -	Otherwise we do not apply any random operations */
 		if (this.randomness) {
 			if (this.randomnessLevel == 1) {
 				return arr.get(new Random().nextInt(arr.size()));
 			} 
 
-			/* Make a shallow copy of arr in order to be able to modify it */
+			/* Make a shallow copy of arr to be able to modify it */
 			arg = new ArrayList<Task>(arr);
 			for (int i = 0; i < (arr.size() / this.randomnessLevel); i++) {
 				arg.remove(new Random().nextInt(arg.size()));

@@ -284,6 +284,8 @@ run_stats () {
 
 		output_stat_file="$stats_dir/$1$solver_stat_file_extension"
 
+		echo -n "" > $output_stat_file
+
 		for instance in $(ls -1 $instances_dir); do
 			if [[ $instance != "README.md" ]]; then
 				line=$($base_dir/run main $1 $instance | grep $instance)
@@ -303,7 +305,7 @@ run_stats () {
 
 		output_stat_file="$stats_dir/$3$solver_stat_file_extention"
 
-		echo "" > $output_stat_file
+		echo -n "" > $output_stat_file
 
 		echo "=== AVERAGING RESULTS OF $3 ($output_stat_file) ==="
 
@@ -372,10 +374,11 @@ run_stats () {
 #########################################
 
 run_graph () {
-	if [[ $# -eq 0 ]]; then
-		usage_graph
-	fi
-	cd $graph_dir && ./generate_html_graph $1
+	#if [[ $# -eq 0 ]]; then
+	#	usage_graph
+	#fi
+	#cd $graph_dir && ./generate_html_graph $1
+	firefox $graph_dir/index.html &
 }
 
 
@@ -504,6 +507,65 @@ case "$1" in
 
 	"draw")
 		run_draw ${args[@]:1}
+		;;
+
+	"stats_all")
+		solvers=(
+			#basic
+			#random
+			greedyspt
+			greedylpt
+			greedysrpt
+			greedylrpt
+			greedyestspt
+			greedyestlpt
+			greedyestsrpt
+			greedyestlrpt
+			greedyspt_random
+			greedylpt_random
+			greedysrpt_random
+			greedylrpt_random
+			greedyestspt_random
+			greedyestlpt_random
+			greedyestsrpt_random
+			greedyestlrpt_random
+			descent
+			)
+		for solver in "${solvers[@]}"; do
+			echo ">>> ./run stats $solver <<<"
+			run_stats $solver
+		done
+		;;
+
+	"json_all")
+		solvers=(
+			#basic
+			#random
+			greedyspt
+			greedylpt
+			greedysrpt
+			greedylrpt
+			greedyestspt
+			greedyestlpt
+			greedyestsrpt
+			greedyestlrpt
+			greedyspt_random
+			greedylpt_random
+			greedysrpt_random
+			greedylrpt_random
+			greedyestspt_random
+			greedyestlpt_random
+			greedyestsrpt_random
+			greedyestlrpt_random
+			descent
+			)
+		for solver in "${solvers[@]}"; do
+			echo ">>> ./run stats $solver <<<"
+			output_stat_file="$stats_dir/$solver$solver_stat_file_extension"
+			output_json="$output_stat_file.json"
+			add_available_solver_stats_json $solver $output_json
+			stats2json $output_stat_file $output_json $solver
+		done
 		;;
 
 	*)
