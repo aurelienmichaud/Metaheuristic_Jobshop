@@ -83,16 +83,17 @@ public class DescentSolver implements Solver {
 
 	@Override
 	public Result solve(Instance instance, long deadline) {
+		/* The solver used to get the initial solution we will base our neighbour search on */
 		GreedySolver initialSolver = new GreedySolver(GreedyBinaryRelation.SPT);
 
 		List<Block> blocks;
 
 		ResourceOrder bestSolution = new ResourceOrder(initialSolver.solve(instance, deadline).schedule);
 		int bestSolutionMakespan = bestSolution.toSchedule().makespan();
-
+		/* stuck means we have not found any better neighbour */
 		boolean stuck = false;
 
-		while (System.currentTimeMillis() < deadline && !stuck) {
+		while (!stuck && System.currentTimeMillis() < deadline) {
 
 			stuck = true;
 
@@ -103,6 +104,8 @@ public class DescentSolver implements Solver {
 					s.applyOn(test);
 		
 					int testMakespan = test.toSchedule().makespan();
+					/* test's state happens to be better than the current bestSolution
+					 * -> we update bestSolution and keep going */
 					if (testMakespan < bestSolutionMakespan) {
 						bestSolution = test.copy();
 						bestSolutionMakespan = testMakespan; 
@@ -116,13 +119,20 @@ public class DescentSolver implements Solver {
 	}
 
 	/** Returns a list of all blocks of the critical path. */
-	List<Block> blocksOfCriticalPath(ResourceOrder order) {
-		ArrayList<Block> blockList = new ArrayList<Block>();
+	private List<Block> blocksOfCriticalPath(ResourceOrder order) {
+
+		ArrayList<Block> blocks = new ArrayList<Block>();
 
 		List<Task> criticalPath = order.toSchedule().criticalPath();
 
-		ArrayList<Integer> indexes = new ArrayList<Integer>();
+		/* Each visited machine has 2 tasks to remember of : the 'first task'
+		 * and the 'last task' which are using that machine. We store these tasks
+		 * by remembering their index in the ResourceOrder table. */
 		int[][] visitedMachines = new int[order.instance.numMachines][2];
+		/* This table keeps track of the indexes of the 'visitedMachines' table
+		 * indicating that this perticular machine possess a 'first task' AND a
+		 * a 'last task' */
+		ArrayList<Integer> visitedMachinesIndexes = new ArrayList<Integer>();
 
 		for (int i = 0; i < order.instance.numMachines; i++) {
 			Arrays.fill(visitedMachines[i], -1);
@@ -139,29 +149,39 @@ public class DescentSolver implements Solver {
 					break;
 				}
 			}
-
+			/* If the current machine has not been visited yet, then
+			 * we set the 'first task' index of that machine to be the 
+			 * current task index, and it will not be changed */
 			if (current[0] == -1) {
 				current[0] = taskIndex;
-			} else {
-				indexes.add(new Integer(currentMachine));
+			}
+			/* Otherwise, the current machine has already been visited.
+			 * Therefore we now have a 'last task', which will be updated
+			 * each time we visit that machine again in order to keep track
+			 * of that last task that is using it.
+			 * It also updates the indexes table since having a 'last task' means
+			 * that we will be able to instantiate one Block for this machine */
+			else {
+				visitedMachinesIndexes.add(new Integer(currentMachine));
 				current[1] = taskIndex;
 			}
 		}
-
-		for (Integer i: indexes) {
+		/* Now we instantiate one block per index in 'visitedMachinesIndexes' */
+		for (Integer i: visitedMachinesIndexes) {
 			int[] tt = visitedMachines[i.intValue()];
-			blockList.add(new Block(i, tt[0], tt[1]));
+			blocks.add(new Block(i, tt[0], tt[1]));
 		}
 
-		return blockList;
+		return blocks;
 	}
 
 	/** For a given block, return the possible swaps for the Nowicki and Smutnicki neighborhood */
-	List<Swap> neighbors(Block block) {
+	private List<Swap> neighbors(Block block) {
+
 		List<Swap> neighbours = new ArrayList<Swap>();
 
-		neighbours.add(new Swap(block.machine, block.firstTask, block.firstTask+1));
-		neighbours.add(new Swap(block.machine, block.lastTask, block.lastTask-1));
+		neighbours.add(new Swap(block.machine, block.firstTask,	block.firstTask + 1));
+		neighbours.add(new Swap(block.machine, block.lastTask, 	block.lastTask - 1));
 	
 		return neighbours;
 	}
