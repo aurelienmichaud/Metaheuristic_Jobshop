@@ -17,7 +17,7 @@ usage () {
 	echo -e "$0 stats SOLVER\t\t\t\t\t\t: Run stats script to get the stats of the solver running on ALL instances. Please run '$0 stats' for information on averages"
 	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
 	echo -e "$0 build\t\t\t\t\t\t\t: gradle build"
-	echo -e "$0 graph best|runtime|makespan|distance\t\t\t: Generate a html/js line graph comparing all the algorithms stats and open that graph in firefox"
+	echo -e "$0 graph\t\t\t\t\t\t\t: Open a HTML/JS page allowing to manipulate all the solvers' statistics in graphs"
 	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in firefox"
 	exit 1
 }
@@ -374,10 +374,6 @@ run_stats () {
 #########################################
 
 run_graph () {
-	#if [[ $# -eq 0 ]]; then
-	#	usage_graph
-	#fi
-	#cd $graph_dir && ./generate_html_graph $1
 	firefox $graph_dir/index.html &
 }
 

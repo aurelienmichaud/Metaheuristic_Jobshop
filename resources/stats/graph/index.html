@@ -147,6 +147,26 @@
 		const available_instances_json_file = "../instances.json";
 		const available_solver_stats_json_file = "../available_solver_stats.json";
 
+		const default_stat_setting = "distance";
+
+		const stat_settings = [
+			"best",
+			"runtime",
+			"makespan",
+			"distance"
+		];
+
+		const label_string_per_stat_setting = {
+			"best": 	"Best known makespan",
+			"runtime": 	"Runtime in milliseconds (rounded)",
+			"makespan": 	"Makespan",
+			"distance": 	"Distance to the optimal makespan (%)",
+		};
+
+		var _datasets; 
+		var solver_list = [];
+		var displayed_solvers = [];
+
 		var i = 0;
 		function getNewColor() {
 			return window.chartColors[colorNames[i++ % colorNames.length]];
@@ -171,7 +191,6 @@
 			};
 		}
 
-		var solver_list = [];
 
 		// Fetch the instance names
 		var _labels = (function () {
@@ -183,19 +202,56 @@
 				});
 				return instances;
 		})();
+
+		function fetchAllDataFirstTime() {
+				var datasets = [];
+				$.getJSON(available_solver_stats_json_file, function(data) {
+					$.each(data.solvers, function(index, solver) {
+						solver_list.push(solver.name);
+						datasets.push(fetchSolverDataset(solver.name, solver.path, default_stat_setting));
+					});
+				});
+				displayed_solvers = Array.from(solver_list);
+				return datasets;
+		}
+
+
 		// Fetch all the solver's stats
 		function fetchAllData(stat_setting) {
 				var datasets = [];
 				$.getJSON(available_solver_stats_json_file, function(data) {
 					$.each(data.solvers, function(index, solver) {
-						solver_list.push(solver.name);
 						datasets.push(fetchSolverDataset(solver.name, solver.path, stat_setting));
 					});
 				});
 				return datasets;
 		}
 
-		var _datasets = fetchAllData("distance");
+		function display_stat(stat_setting) {
+			_datasets = fetchAllData(stat_setting)
+
+			config.options.scales.yAxes[0].scaleLabel.labelString = label_string_per_stat_setting[stat_setting];
+			config.data.datasets = [];
+
+			for (solver_name of displayed_solvers) {
+
+				var index = -1;
+				for (i = 0; i < _datasets.length; i++) {
+					if (_datasets[i].label === solver_name)	{
+						index = i;
+						break;
+					}
+				}
+				if (index > -1) {
+					config.data.datasets.push(_datasets[i]);
+				}
+			}
+
+			window.chart.update();
+		}
+
+
+		_datasets = fetchAllDataFirstTime(default_stat_setting);
 
 		var _options = {
 				responsive: true,
@@ -240,11 +296,7 @@
 			};
 
 
-		window.onload = function() {
-			var ctx = document.getElementById('canvas').getContext('2d');
-			chart = new Chart(ctx, config);
-			createInterface();
-		};
+
 
 		function addDataset(solver_name) {
 			var index = -1;
@@ -265,6 +317,7 @@
 
 			if (index > -1) {
 				config.data.datasets.push(_datasets[i]);
+				displayed_solvers.push(solver_name);
 			}
 
 			window.chart.update();
@@ -279,35 +332,39 @@
 					break;
 				}
 			}
+
+			for (i = 0; i < displayed_solvers.length; i++) {
+				if (displayed_solvers[i] == solver_name) {
+					displayed_solvers.splice(i, 1);
+					break;
+				}
+			}
+
 			if (index > -1) {
 				config.data.datasets.splice(index, 1);
 				window.chart.update();
 			}
-
 		}
 
 		function createInterface() {
 
-			stat_settings = [
-				"best",
-				"runtime",
-				"makespan",
-				"distance"
-			];
 			for (setting of stat_settings) {
 				$("#stat_settings_container").append('<label class="stat_setting_label" for="radio_' + setting + '" id="label_' + setting + '">');
 				$("#label_" + setting).append('<input type="radio" name="stat_setting" id="radio_' + setting + '" value="' + setting + '">' + setting);
 				$("#radio_" + setting).change(function () {
+					display_stat($(this).prop("value"))
+					/*
 					_datasets = fetchAllData($(this).prop("value"));
 					config.data.datasets = Array.from(_datasets);
 					$('input[type=checkbox]').each(function() {
 						$(this).prop('checked', true);
 					});
 					window.chart.update();
+					*/
 				});
 			}
 
-			$("#radio_" + "distance").prop("checked", true);
+			$("#radio_" + default_stat_setting).prop("checked", true);
 
 
 			$("#interface").append('<div id="interface_buttons">');
@@ -357,6 +414,13 @@
 				col += 1;
 			});	
 		}
+
+		window.onload = function() {
+			var ctx = document.getElementById('canvas').getContext('2d');
+
+			chart = new Chart(ctx, config);
+			createInterface();
+		};
 
 	</script>
 </body>
