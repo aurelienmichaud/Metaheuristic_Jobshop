@@ -28,8 +28,7 @@ public class Main {
 		solvers.put("basic",			new BasicSolver());
 		solvers.put("random",			new RandomSolver());
 
-		solvers.put("descent",			new DescentSolver());
-
+		/* GREEDY */
 		solvers.put("greedyspt",		new GreedySolver(GreedyBinaryRelation.SPT));
 		solvers.put("greedylpt",		new GreedySolver(GreedyBinaryRelation.LPT));
 		solvers.put("greedysrpt",		new GreedySolver(GreedyBinaryRelation.SRPT));
@@ -49,6 +48,52 @@ public class Main {
 		solvers.put("greedyestlpt_random", 	new GreedySolver(GreedyBinaryRelation.EST_LPT, DEFAULT_RANDOMNESS_LEVEL));
 		solvers.put("greedyestsrpt_random",	new GreedySolver(GreedyBinaryRelation.EST_SRPT, DEFAULT_RANDOMNESS_LEVEL));
 		solvers.put("greedyestlrpt_random", 	new GreedySolver(GreedyBinaryRelation.EST_LRPT, DEFAULT_RANDOMNESS_LEVEL));
+
+		/* DESCENT */
+		solvers.put("descent",			new DescentSolver());
+
+		solvers.put("descentspt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.SPT)));
+		solvers.put("descentlpt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.LPT)));
+		solvers.put("descentsrpt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.SRPT)));
+		solvers.put("descentlrpt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.LRPT)));
+
+		solvers.put("descentestspt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_SPT)));
+		solvers.put("descentestlpt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_LPT)));
+		solvers.put("descentestsrpt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_SRPT)));
+		solvers.put("descentestlrpt",		new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_LRPT)));
+
+		solvers.put("descentspt_random", 	new DescentSolver(new GreedySolver(GreedyBinaryRelation.SPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("descentlpt_random", 	new DescentSolver(new GreedySolver(GreedyBinaryRelation.LPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("descentsrpt_random",	new DescentSolver(new GreedySolver(GreedyBinaryRelation.SRPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("descentlrpt_random", 	new DescentSolver(new GreedySolver(GreedyBinaryRelation.LRPT, DEFAULT_RANDOMNESS_LEVEL)));
+
+		solvers.put("descentestspt_random", 	new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_SPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("descentestlpt_random", 	new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_LPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("descentestsrpt_random",	new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_SRPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("descentestlrpt_random", 	new DescentSolver(new GreedySolver(GreedyBinaryRelation.EST_LRPT, DEFAULT_RANDOMNESS_LEVEL)));
+
+		/* TABOO */
+		solvers.put("taboo",			new TabooSolver());
+
+		solvers.put("taboospt",			new TabooSolver(new GreedySolver(GreedyBinaryRelation.SPT)));
+		solvers.put("taboolpt",			new TabooSolver(new GreedySolver(GreedyBinaryRelation.LPT)));
+		solvers.put("taboosrpt",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.SRPT)));
+		solvers.put("taboolrpt",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.LRPT)));
+
+		solvers.put("tabooestspt",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_SPT)));
+		solvers.put("tabooestlpt",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_LPT)));
+		solvers.put("tabooestsrpt",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_SRPT)));
+		solvers.put("tabooestlrpt",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_LRPT)));
+
+		solvers.put("taboospt_random",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.SPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("taboolpt_random",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.LPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("taboosrpt_random",		new TabooSolver(new GreedySolver(GreedyBinaryRelation.SRPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("taboolrpt_random", 	new TabooSolver(new GreedySolver(GreedyBinaryRelation.LRPT, DEFAULT_RANDOMNESS_LEVEL)));
+
+		solvers.put("tabooestspt_random", 	new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_SPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("tabooestlpt_random", 	new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_LPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("tabooestsrpt_random",	new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_SRPT, DEFAULT_RANDOMNESS_LEVEL)));
+		solvers.put("tabooestlrpt_random", 	new TabooSolver(new GreedySolver(GreedyBinaryRelation.EST_LRPT, DEFAULT_RANDOMNESS_LEVEL)));
 
 		// add new solvers here
 	}

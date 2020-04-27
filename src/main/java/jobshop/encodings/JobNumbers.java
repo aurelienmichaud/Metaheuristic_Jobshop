@@ -80,6 +80,10 @@ public class JobNumbers extends Encoding {
 
 	}
 
+	public JobNumbers copy() {
+		return new JobNumbers(this.toSchedule());
+	}
+
 	@Override
 	public String toString() {
 		return Arrays.toString(Arrays.copyOfRange(jobs,0, nextToSet));

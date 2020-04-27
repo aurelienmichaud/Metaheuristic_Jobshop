@@ -1,5 +1,12 @@
 basic /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//basic.stats.json
-descent /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descent.stats.json
+descentestlpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestlpt.stats.json
+descentestlrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestlrpt.stats.json
+descentestspt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestspt.stats.json
+descentestsrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestsrpt.stats.json
+descentlpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentlpt.stats.json
+descentlrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentlrpt.stats.json
+descentspt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentspt.stats.json
+descentsrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentsrpt.stats.json
 greedyestlpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlpt.stats.json
 greedyestlpt_random /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlpt_random.stats.json
 greedyestlrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedyestlrpt.stats.json
@@ -17,3 +24,11 @@ greedyspt_random /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//gree
 greedysrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedysrpt.stats.json
 greedysrpt_random /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//greedysrpt_random.stats.json
 random /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//random.stats.json
+tabooestlpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestlpt.stats.json
+tabooestlrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestlrpt.stats.json
+tabooestspt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestspt.stats.json
+tabooestsrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestsrpt.stats.json
+taboolpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboolpt.stats.json
+taboolrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboolrpt.stats.json
+taboospt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboospt.stats.json
+taboosrpt /home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboosrpt.stats.json

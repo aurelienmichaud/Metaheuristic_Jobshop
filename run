@@ -469,6 +469,61 @@ if [[ $# -lt 1 ]]; then
 	usage
 fi
 
+solvers=(
+	#basic
+	#random
+	#greedyspt
+	#greedylpt
+	#greedysrpt
+	#greedylrpt
+	#greedyestspt
+	#greedyestlpt
+	#greedyestsrpt
+	#greedyestlrpt
+	#greedyspt_random
+	#greedylpt_random
+	#greedysrpt_random
+	#greedylrpt_random
+	#greedyestspt_random
+	#greedyestlpt_random
+	#greedyestsrpt_random
+	#greedyestlrpt_random
+
+	#descentspt
+	#descentlpt
+	#descentsrpt
+	#descentlrpt
+	#descentestspt
+	#descentestlpt
+	#descentestsrpt
+	#descentestlrpt
+	#descentspt_random
+	#descentlpt_random
+	#descentsrpt_random
+	#descentlrpt_random
+	#descentestspt_random
+	#descentestlpt_random
+	#descentestsrpt_random
+	#descentestlrpt_random
+
+	taboospt
+	taboolpt
+	taboosrpt
+	taboolrpt
+	tabooestspt
+	tabooestlpt
+	tabooestsrpt
+	tabooestlrpt
+	#taboospt_random
+	#taboolpt_random
+	#taboosrpt_random
+	#taboolrpt_random
+	#tabooestspt_random
+	#tabooestlpt_random
+	#tabooestsrpt_random
+	#tabooestlrpt_random
+	)
+
 args=($@)
 
 case "$1" in
@@ -506,27 +561,6 @@ case "$1" in
 		;;
 
 	"stats_all")
-		solvers=(
-			#basic
-			#random
-			greedyspt
-			greedylpt
-			greedysrpt
-			greedylrpt
-			greedyestspt
-			greedyestlpt
-			greedyestsrpt
-			greedyestlrpt
-			greedyspt_random
-			greedylpt_random
-			greedysrpt_random
-			greedylrpt_random
-			greedyestspt_random
-			greedyestlpt_random
-			greedyestsrpt_random
-			greedyestlrpt_random
-			descent
-			)
 		for solver in "${solvers[@]}"; do
 			echo ">>> ./run stats $solver <<<"
 			run_stats $solver
@@ -534,27 +568,6 @@ case "$1" in
 		;;
 
 	"json_all")
-		solvers=(
-			#basic
-			#random
-			greedyspt
-			greedylpt
-			greedysrpt
-			greedylrpt
-			greedyestspt
-			greedyestlpt
-			greedyestsrpt
-			greedyestlrpt
-			greedyspt_random
-			greedylpt_random
-			greedysrpt_random
-			greedylrpt_random
-			greedyestspt_random
-			greedyestlpt_random
-			greedyestsrpt_random
-			greedyestlrpt_random
-			descent
-			)
 		for solver in "${solvers[@]}"; do
 			echo ">>> ./run stats $solver <<<"
 			output_stat_file="$stats_dir/$solver$solver_stat_file_extension"

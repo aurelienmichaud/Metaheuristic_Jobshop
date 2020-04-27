@@ -108,8 +108,10 @@ public class GreedySolver implements Solver {
 			 * the remaining tasks of the same job */
 			for (int job = 0; job < this.instance.numJobs; job++) {
 				this.remainingProcessingTimes[job][this.instance.numTasks - 1] = this.instance.duration(job, this.instance.numTasks - 1);
+				//this.remainingProcessingTimes[job][this.instance.numTasks - 1] = 0;
 				for (int task = this.instance.numTasks - 2; task >= 0; task--) {
 					this.remainingProcessingTimes[job][task] = this.remainingProcessingTimes[job][task + 1] + this.instance.duration(job, task);
+					//this.remainingProcessingTimes[job][task] = this.remainingProcessingTimes[job][task + 1] + this.instance.duration(job, task + 1);
 				}
 			}
 		}

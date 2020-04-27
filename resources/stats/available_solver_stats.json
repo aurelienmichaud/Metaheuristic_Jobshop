@@ -5,8 +5,43 @@
 }
 ,
 {
-"name": "descent",
-"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descent.stats.json"
+"name": "descentestlpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestlpt.stats.json"
+}
+,
+{
+"name": "descentestlrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestlrpt.stats.json"
+}
+,
+{
+"name": "descentestspt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestspt.stats.json"
+}
+,
+{
+"name": "descentestsrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentestsrpt.stats.json"
+}
+,
+{
+"name": "descentlpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentlpt.stats.json"
+}
+,
+{
+"name": "descentlrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentlrpt.stats.json"
+}
+,
+{
+"name": "descentspt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentspt.stats.json"
+}
+,
+{
+"name": "descentsrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//descentsrpt.stats.json"
 }
 ,
 {
@@ -92,5 +127,45 @@
 {
 "name": "random",
 "path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//random.stats.json"
+}
+,
+{
+"name": "tabooestlpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestlpt.stats.json"
+}
+,
+{
+"name": "tabooestlrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestlrpt.stats.json"
+}
+,
+{
+"name": "tabooestspt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestspt.stats.json"
+}
+,
+{
+"name": "tabooestsrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//tabooestsrpt.stats.json"
+}
+,
+{
+"name": "taboolpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboolpt.stats.json"
+}
+,
+{
+"name": "taboolrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboolrpt.stats.json"
+}
+,
+{
+"name": "taboospt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboospt.stats.json"
+}
+,
+{
+"name": "taboosrpt",
+"path": "/home/cacao/INSA/Metaheuristiques/jobshop/resources/stats//taboosrpt.stats.json"
 }
 ]}
