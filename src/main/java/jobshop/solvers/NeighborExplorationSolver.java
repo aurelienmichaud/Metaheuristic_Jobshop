@@ -92,59 +92,49 @@ public class NeighborExplorationSolver {
 		}
 	}
 
+	private int getTaskIndex(Task t, ResourceOrder order) {
+		int currentMachine = order.instance.machine(t.job, t.task);
+		int taskIndex = -1;
+		/* let's find the task's index in the resource order table */
+		for (int i = 0; i < order.tasksByMachine[currentMachine].length; i++) {
+			if (order.tasksByMachine[currentMachine][i].equals(t)) {
+				taskIndex = i;	
+				break;
+			}
+		}
+		return taskIndex;
+	}
 
 	/** Returns a list of all blocks of the critical path. */
 	protected List<Block> blocksOfCriticalPath(ResourceOrder order) {
 
 		ArrayList<Block> blocks = new ArrayList<Block>();
 
-		List<Task> criticalPath = order.toSchedule().criticalPath();
+		int currentMachine = -1;
+		int firstTaskIndex = -1;
+		int lastTaskIndex = -1;
+		boolean atLeastTwo = false;
+		
+		for (Task t : order.toSchedule().criticalPath()) {
+			int machine = order.instance.machine(t);
 
-		/* Each visited machine has 2 tasks to remember of : the 'first task'
-		 * and the 'last task' which are using that machine. We store these tasks
-		 * by remembering their index in the ResourceOrder table. */
-		int[][] visitedMachines = new int[order.instance.numMachines][2];
-		/* This table keeps track of the indexes of the 'visitedMachines' table
-		 * indicating that this perticular machine possess a 'first task' AND a
-		 * a 'last task' */
-		ArrayList<Integer> visitedMachinesIndexes = new ArrayList<Integer>();
+			if (currentMachine == -1) {
+				currentMachine = machine;	
+				firstTaskIndex = this.getTaskIndex(t, order);
+				continue;
+			}
 
-		for (int i = 0; i < order.instance.numMachines; i++) {
-			Arrays.fill(visitedMachines[i], -1);
-		}
-
-		for (Task t : criticalPath) {
-			int currentMachine = order.instance.machine(t.job, t.task);
-			int taskIndex = -1;
-			/* let's find the task's index in the resource order table */
-			for (int i = 0; i < order.tasksByMachine[currentMachine].length; i++) {
-				if (order.tasksByMachine[currentMachine][i].equals(t)) {
-					taskIndex = i;	
-					break;
+			if (machine == currentMachine) {
+				lastTaskIndex = this.getTaskIndex(t, order);
+				atLeastTwo = true;
+			} else {
+				if (atLeastTwo == true) {
+					blocks.add(new Block(currentMachine, firstTaskIndex, lastTaskIndex));
 				}
+				currentMachine = machine;	
+				firstTaskIndex = this.getTaskIndex(t, order);
+				atLeastTwo = false;
 			}
-
-			/* If the current machine has not been visited yet, then
-			 * we set the 'first task' index of that machine to be the 
-			 * current task index, and it will not be changed */
-			if (visitedMachines[currentMachine][0] == -1) {
-				visitedMachines[currentMachine][0] = taskIndex;
-			}
-			/* Otherwise, the current machine has already been visited.
-			 * Therefore we now have a 'last task', which will be updated
-			 * each time we visit that machine again in order to keep track
-			 * of that last task that is using it.
-			 * It also updates the indexes table since having a 'last task' means
-			 * that we will be able to instantiate one Block for this machine */
-			else {
-				visitedMachinesIndexes.add(new Integer(currentMachine));
-				visitedMachines[currentMachine][1] = taskIndex;
-			}
-		}
-		/* Now we instantiate one block per index in 'visitedMachinesIndexes' */
-		for (Integer i: visitedMachinesIndexes) {
-			int[] tt = visitedMachines[i.intValue()];
-			blocks.add(new Block(i.intValue(), tt[0], tt[1]));
 		}
 
 		return blocks;
@@ -207,53 +197,68 @@ public class NeighborExplorationSolver {
 		}
 	}
 
+	private int getTaskIndex(Task t, JobNumbers order) {
+		int taskIndex = -1;
+		/* let's find the task's index in the job numbers table */
+		int jobCounter = -1;
+		for (int i = 0; i < order.jobs.length; i++) {
+			if (order.jobs[i] == t.job) {
+				jobCounter++;
+			}
+
+			if (jobCounter == t.task) {
+				taskIndex = i;
+				break;
+			}
+		}
+		return taskIndex;
+	}
+
 	/** Returns a list of all blocks of the critical path. */
 	protected List<BlockJobNumbers> blocksOfCriticalPath(JobNumbers order) {
 
 		ArrayList<BlockJobNumbers> blocks = new ArrayList<BlockJobNumbers>();
 
-		List<Task> criticalPath = order.toSchedule().criticalPath();
+		int currentMachine = -1;
 
-		int[][] visitedMachines = new int[order.instance.numMachines][4];
+		int firstTaskIndex 		= -1;
+		int secondFirstTaskIndex 	= -1;
+		int secondLastTaskIndex 	= -1;
+		int lastTaskIndex 		= -1;
 
-		ArrayList<Integer> visitedMachinesIndexes = new ArrayList<Integer>();
+		boolean atLeastTwo = false;
+		
+		for (Task t : order.toSchedule().criticalPath()) {
+			int machine = order.instance.machine(t);
 
-		for (int i = 0; i < order.instance.numMachines; i++) {
-			Arrays.fill(visitedMachines[i], -1);
-		}
+			if (currentMachine == -1) {
+				currentMachine = machine;	
+				firstTaskIndex = this.getTaskIndex(t, order);
+				continue;
+			}
 
-		for (Task t : criticalPath) {
-			int currentMachine = order.instance.machine(t);
-			int taskIndex = -1;
-			/* let's find the task's index in the job numbers table */
-			int jobCounter = 0;
-			for (int i = 0; i < order.jobs.length; i++) {
-				if (order.jobs[i] == t.job) {
-					jobCounter++;
+			if (machine == currentMachine) {
+				if (secondFirstTaskIndex == -1) {
+					secondFirstTaskIndex = this.getTaskIndex(t, order);
+				} else {
+					secondLastTaskIndex = lastTaskIndex;
+					lastTaskIndex = this.getTaskIndex(t, order);
+				}
+				atLeastTwo = true;
+			} else {
+				if (atLeastTwo == true) {
+					blocks.add(new BlockJobNumbers(currentMachine, firstTaskIndex, secondFirstTaskIndex, secondLastTaskIndex, lastTaskIndex));
 				}
 
-				if ((jobCounter - 1) == t.task) {
-					taskIndex = i;
-					break;
-				}
-			}
+				currentMachine = machine;	
 
-			if (visitedMachines[currentMachine][0] == -1) {
-				visitedMachines[currentMachine][0] = taskIndex;
+				firstTaskIndex 		= this.getTaskIndex(t, order);
+				secondFirstTaskIndex 	= -1;
+				secondLastTaskIndex 	= -1;
+				lastTaskIndex 		= -1;
+
+				atLeastTwo = false;
 			}
-			else if (visitedMachines[currentMachine][1] == -1) {
-				visitedMachinesIndexes.add(new Integer(currentMachine));
-				visitedMachines[currentMachine][1] = taskIndex;
-			}
-			else {
-				visitedMachines[currentMachine][2] = visitedMachines[currentMachine][3];
-				visitedMachines[currentMachine][3] = taskIndex;
-			}
-		}
-		/* Now we instantiate one block per index in 'visitedMachinesIndexes' */
-		for (Integer i: visitedMachinesIndexes) {
-			int[] tt = visitedMachines[i.intValue()];
-			blocks.add(new BlockJobNumbers(i.intValue(), tt[0], tt[1], tt[2], tt[3]));
 		}
 
 		return blocks;

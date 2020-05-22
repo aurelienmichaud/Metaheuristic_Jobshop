@@ -1,6 +1,8 @@
 #!/bin/bash
 
 
+web_browser="firefox"
+
 base_dir=$(pwd)
 instances_dir=$base_dir/instances/
 stats_dir=$base_dir/resources/stats/
@@ -18,7 +20,7 @@ usage () {
 	echo -e "$0 clean\t\t\t\t\t\t\t: gradle clean"
 	echo -e "$0 build\t\t\t\t\t\t\t: gradle build"
 	echo -e "$0 graph\t\t\t\t\t\t\t: Open a HTML/JS page allowing to manipulate all the solvers' statistics in graphs"
-	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in firefox"
+	echo -e "$0 draw PATH_TO_INSTANCE\t\t\t\t\t: Generate a svg graph file representing the instance problem and open svg file in $web_browser"
 	exit 1
 }
 
@@ -162,7 +164,7 @@ run_test () {
 
 	gradle test --tests $1 || exit 1
 
-	firefox	./build/reports/tests/test/index.html
+	$web_browser	./build/reports/tests/test/index.html
 }
 
 
@@ -374,7 +376,7 @@ run_stats () {
 #########################################
 
 run_graph () {
-	firefox $graph_dir/index.html &
+	$web_browser $graph_dir/index.html &
 }
 
 
@@ -454,7 +456,7 @@ run_draw () {
 
 			echo "}" >> $output_file
 			
-			dot -Tsvg $output_file > $svg_dir/$instance_name.svg && rm $output_file && firefox $svg_dir/$instance_name.svg
+			dot -Tsvg $output_file > $svg_dir/$instance_name.svg && rm $output_file && $web_browser $svg_dir/$instance_name.svg
 		fi
 	done
 }

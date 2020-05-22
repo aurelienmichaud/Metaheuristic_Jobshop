@@ -14,7 +14,7 @@ import java.util.List;
 public class TabooSolver extends NeighborExplorationSolver implements Solver {
 
 	private int iterationMax = 100000;
-	private int swapLivingTime = 4;
+	private int swapLivingTime = 2;
 
 	public TabooSolver() {
 		super();
@@ -58,6 +58,10 @@ public class TabooSolver extends NeighborExplorationSolver implements Solver {
 			ResourceOrder bestTmpSolution 		= null;
 			int bestTmpSolutionMakespan 		= -1;
 
+			int bestTmpSolutionMachine		= -1;
+			int bestTmpSolutionTaskIndexT1		= -1;
+			int bestTmpSolutionTaskIndexT2		= -1;
+
 			for (Block block : this.blocksOfCriticalPath(bestSolution)) {
 
 				for (Swap s : this.neighbors(block)) {
@@ -76,27 +80,31 @@ public class TabooSolver extends NeighborExplorationSolver implements Solver {
 
 						if (testSchedule != null) {
 							testMakespan = test.toSchedule().makespan();
-							/* first initialization of the best neighbor solution */
-							if (bestTmpSolution == null) {
-								bestTmpSolution = test.copy();
-								bestTmpSolutionMakespan = testMakespan;
-							}
 
 							/* 'test' happens to be better than the current bestSolution
 							 * -> we update bestSolution and keep going */
-							if (testMakespan < bestTmpSolutionMakespan) {
-								bestTmpSolution = test.copy();
-								bestTmpSolutionMakespan = testMakespan; 
+							if (bestTmpSolution == null || testMakespan < bestTmpSolutionMakespan) {
+
+								bestTmpSolution 		= test.copy();
+								bestTmpSolutionMakespan 	= testMakespan;
+
+								bestTmpSolutionMachine		= s.machine;
+								bestTmpSolutionTaskIndexT1 	= taskIndexT1;
+								bestTmpSolutionTaskIndexT2 	= taskIndexT2;
+
 								stuck = false;
 							}
 						}
 
-						solutionTaboos[s.machine * instance.numTasks + taskIndexT2][s.machine * instance.numTasks + taskIndexT1] = iterationCounter + this.swapLivingTime;
 					} 
 				}
 			}
 
+
 			if (bestTmpSolution != null) {
+
+				solutionTaboos[bestTmpSolutionMachine * instance.numTasks + bestTmpSolutionTaskIndexT2][bestTmpSolutionMachine * instance.numTasks + bestTmpSolutionTaskIndexT1] = iterationCounter + this.swapLivingTime;
+
 				bestCurrentSolution = bestTmpSolution.copy();
 				bestCurrentSolutionMakespan = bestTmpSolutionMakespan;
 
@@ -138,6 +146,10 @@ public class TabooSolver extends NeighborExplorationSolver implements Solver {
 			JobNumbers bestTmpSolution 		= null;
 			int bestTmpSolutionMakespan 		= -1;
 
+			int bestTmpSolutionMachine		= -1;
+			int bestTmpSolutionTaskIndexT1		= -1;
+			int bestTmpSolutionTaskIndexT2		= -1;
+
 			for (BlockJobNumbers block : this.blocksOfCriticalPath(bestSolution)) {
 
 				for (SwapJobNumbers s : this.neighbors(block)) {
@@ -169,27 +181,28 @@ public class TabooSolver extends NeighborExplorationSolver implements Solver {
 
 						if (testSchedule != null) {
 							testMakespan = test.toSchedule().makespan();
-							/* first initialization of the best neighbor solution */
-							if (bestTmpSolution == null) {
-								bestTmpSolution = test.copy();
-								bestTmpSolutionMakespan = testMakespan;
-							}
 
 							/* 'test' happens to be better than the current bestSolution
 							 * -> we update bestSolution and keep going */
-							if (testMakespan < bestTmpSolutionMakespan) {
-								bestTmpSolution = test.copy();
-								bestTmpSolutionMakespan = testMakespan; 
+							if (bestTmpSolution == null || testMakespan < bestTmpSolutionMakespan) {
+								bestTmpSolution 		= test.copy();
+								bestTmpSolutionMakespan 	= testMakespan; 
+
+								bestTmpSolutionMachine		= s.machine;
+								bestTmpSolutionTaskIndexT1 	= taskIndexT1;
+								bestTmpSolutionTaskIndexT2 	= taskIndexT2;
+
 								stuck = false;
 							}
 						}
-
-						solutionTaboos[s.machine * instance.numTasks + taskIndexT2][s.machine * instance.numTasks + taskIndexT1] = iterationCounter + this.swapLivingTime;
 					} 
 				}
 			}
 
 			if (bestTmpSolution != null) {
+
+				solutionTaboos[bestTmpSolutionMachine * instance.numTasks + bestTmpSolutionTaskIndexT2][bestTmpSolutionMachine * instance.numTasks + bestTmpSolutionTaskIndexT1] = iterationCounter + this.swapLivingTime;
+
 				bestCurrentSolution = bestTmpSolution.copy();
 				bestCurrentSolutionMakespan = bestTmpSolutionMakespan;
 
